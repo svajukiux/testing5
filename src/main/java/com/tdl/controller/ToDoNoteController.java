@@ -114,11 +114,10 @@ public class ToDoNoteController {
 			return result;
 		}
 		catch (HttpClientErrorException ex) {
-			System.out.println(ex.getStatusCode());
-		     System.out.println(ex.getResponseBodyAsString());
-		     return null;
+			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+	                .body(ex.getResponseBodyAsString());
+		     
 		}
-		
 		//if(toDoNote==null) {
 		//	return ResponseEntity.noContent().build(); // cia reikia naujo exception ten body not found or smth
 		//}
