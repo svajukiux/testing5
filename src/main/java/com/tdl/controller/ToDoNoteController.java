@@ -18,6 +18,7 @@ import org.springframework.hateoas.Resource;
 //import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -102,11 +104,21 @@ public class ToDoNoteController {
 		//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		RestTemplate restTemplate = new RestTemplate();
 		final String uri = "http://friend:5000/users";
-		
+		HttpHeaders headers = new HttpHeaders();
+		//headers.setContentType(MediaType.APPLICATION_JSON);
+		//HttpEntity<User> = new HttpEntity<User>
 		ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
-		ResponseEntity<String> result = restTemplate.postForEntity(uri, user, String.class); 
 		
-		return result;
+		try {
+			ResponseEntity<String> result = restTemplate.postForEntity(uri, user, String.class); 
+			return result;
+		}
+		catch (HttpClientErrorException ex) {
+			System.out.println(ex.getStatusCode());
+		     System.out.println(ex.getResponseBodyAsString());
+		     return null;
+		}
+		
 		//if(toDoNote==null) {
 		//	return ResponseEntity.noContent().build(); // cia reikia naujo exception ten body not found or smth
 		//}
