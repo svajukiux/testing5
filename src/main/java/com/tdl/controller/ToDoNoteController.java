@@ -68,7 +68,7 @@ public class ToDoNoteController {
 			
 		}
 		RestTemplate restTemplate = new RestTemplate();
-		final String uri = "http://193.219.91.103:1858/users";
+		final String uri = "http://friend:5000/users";
 		
 		try {
 			//HttpHeaders requestHeaders = new HttpHeaders();
