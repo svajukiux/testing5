@@ -39,6 +39,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.Gson;
 import com.tdl.exception.InvalidFieldException;
 import com.tdl.exception.ToDoNoteNotFoundException;
 import com.tdl.model.ArrayResponsePojo;
@@ -74,7 +75,10 @@ public class ToDoNoteController {
 			requestHeaders.setContentType(MediaType.APPLICATION_JSON);
 			HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
 			//ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
-			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,entity, ArrayResponsePojo.class); 
+			ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
+			Gson g = new Gson();
+			ArrayResponsePojo testDTO = g.fromJson(result.getBody(), ArrayResponsePojo.class); 
+			System.out.println(testDTO.getMessage());
 			return result;
 			
 		}
