@@ -71,9 +71,9 @@ public class ToDoNoteController {
 		final String uri = "http://193.219.91.103:1858/users";
 		
 		try {
-			HttpHeaders requestHeaders = new HttpHeaders();
-			requestHeaders.setContentType(MediaType.APPLICATION_JSON);
-			HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
+			//HttpHeaders requestHeaders = new HttpHeaders();
+			//requestHeaders.setContentType(MediaType.APPLICATION_JSON);
+			//HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
 			//ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
 			/*ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
 			Gson g = new Gson();
@@ -81,7 +81,8 @@ public class ToDoNoteController {
 			System.out.println(testDTO.getData()[0].getFirstName());
 			return result;
 			*/
-			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,entity, ArrayResponsePojo.class); 
+			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, ArrayResponsePojo.class); 
+			return result;
 			
 		}
 		catch (HttpClientErrorException ex) {
