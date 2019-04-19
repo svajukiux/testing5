@@ -17,7 +17,7 @@ public class ArrayResponsePojo {
 		this.message = message;
 	}
 	public ArrayResponsePojo(User[] data, String message) {
-		super();
+		//super();
 		this.data = data;
 		this.message = message;
 	}
