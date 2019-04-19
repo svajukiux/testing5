@@ -1,5 +1,7 @@
 package com.tdl.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 public class ArrayResponsePojo {
 	private User[] data;
 	private String message;
@@ -16,8 +18,10 @@ public class ArrayResponsePojo {
 	public void setMessage(String message) {
 		this.message = message;
 	}
+	
+	@JsonCreator
 	public ArrayResponsePojo(User[] data, String message) {
-		//super();
+		super();
 		this.data = data;
 		this.message = message;
 	}

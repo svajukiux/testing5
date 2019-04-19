@@ -1,12 +1,14 @@
 package com.tdl.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 public class User {
 	 
 	 private String email;
 	 private String firstName;
 	 private String lastName;
 	 
-	 
+	 @JsonCreator
 	 public User(String email, String firstName, String lastName) {
 		super();
 		this.email = email;
