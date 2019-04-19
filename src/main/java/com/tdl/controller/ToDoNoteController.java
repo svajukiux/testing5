@@ -16,12 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
+import org.springframework.http.HttpEntity;
 //import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -69,7 +72,9 @@ public class ToDoNoteController {
 		try {
 			HttpHeaders requestHeaders = new HttpHeaders();
 			requestHeaders.setContentType(MediaType.APPLICATION_JSON);
-			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, new ParameterizedTypeReference<ArrayResponsePojo>() {}); 
+			HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
+			//ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
+			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,entity, new ParameterizedTypeReference<ArrayResponsePojo>() {}); 
 			return result;
 			
 		}
