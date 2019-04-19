@@ -13,10 +13,12 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 //import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -65,7 +67,7 @@ public class ToDoNoteController {
 		final String uri = "http://friend:5000/users";
 		
 		try {
-			ResponseEntity<ArrayResponsePojo> result = restTemplate.getForEntity(uri, ArrayResponsePojo.class); 
+			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, new ParameterizedTypeReference<ArrayResponsePojo>() {}); 
 			return result;
 			
 		}
