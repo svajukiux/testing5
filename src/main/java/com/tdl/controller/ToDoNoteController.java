@@ -67,6 +67,8 @@ public class ToDoNoteController {
 		final String uri = "http://friend:5000/users";
 		
 		try {
+			HttpHeaders requestHeaders = new HttpHeaders();
+			requestHeaders.setContentType(MediaType.APPLICATION_JSON);
 			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, new ParameterizedTypeReference<ArrayResponsePojo>() {}); 
 			return result;
 			
