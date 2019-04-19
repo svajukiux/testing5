@@ -70,7 +70,7 @@ public class ToDoNoteController {
 			
 		}
 		catch (HttpClientErrorException ex) {
-			return ResponseEntity<>.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
 	                .body(ex.getResponseBodyAsString());
 		     
 		}
