@@ -16,5 +16,10 @@ public class ArrayResponsePojo {
 	public void setMessage(String message) {
 		this.message = message;
 	}
+	public ArrayResponsePojo(User[] data, String message) {
+		super();
+		this.data = data;
+		this.message = message;
+	}
 	
 }
