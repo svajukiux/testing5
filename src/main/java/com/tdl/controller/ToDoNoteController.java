@@ -74,7 +74,7 @@ public class ToDoNoteController {
 			requestHeaders.setContentType(MediaType.APPLICATION_JSON);
 			HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
 			//ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
-			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,entity, new ParameterizedTypeReference<ArrayResponsePojo>() {}); 
+			ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
 			return result;
 			
 		}
