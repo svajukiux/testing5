@@ -36,6 +36,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.tdl.exception.InvalidFieldException;
 import com.tdl.exception.ToDoNoteNotFoundException;
+import com.tdl.model.ArrayResponsePojo;
 import com.tdl.model.ToDoNote;
 import com.tdl.model.User;
 import com.tdl.service.ToDoNoteServiceImpl;
@@ -51,6 +52,35 @@ public class ToDoNoteController {
 	@GetMapping("/todos")
 	public List<ToDoNote> getAllToDoNote(){
 		return toDoNoteService.getAllToDoNote();
+	}
+	
+	@GetMapping("/todos/{toDoNoteId}/users")
+	public ResponseEntity getNotesUsersTest(@PathVariable int toDoNoteId) {
+		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
+		if(note==null) {
+			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
+			
+		}
+		RestTemplate restTemplate = new RestTemplate();
+		final String uri = "http://friend:5000/users";
+		
+		try {
+			ResponseEntity<ArrayResponsePojo> result = restTemplate.getForEntity(uri, ArrayResponsePojo.class); 
+			return result;
+			
+		}
+		catch (HttpClientErrorException ex) {
+			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+	                .body(ex.getResponseBodyAsString());
+		     
+		}
+		//Resource<ToDoNote> resource = new Resource<ToDoNote>(note);
+		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId)).withSelfRel();
+		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote()).withRel("allTodos");
+		//resource.add(linkToSelf);
+		//resource.add(linkToAll);
+		
+		
 	}
 	
 	@GetMapping("/todos/priority/{number}")
@@ -86,7 +116,7 @@ public class ToDoNoteController {
 		return resource;
 	}
 	
-	@GetMapping("/todos/{toDoNoteId}/users")
+	/*@GetMapping("/todos/{toDoNoteId}/users")
 	public List<User> getNotesUsers(@PathVariable int toDoNoteId) {
 		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
 		if(note==null) {
@@ -98,20 +128,18 @@ public class ToDoNoteController {
 		
 		
 	}
+	*/
 	
 	@PostMapping("/todos/{toDoNoteId}/users")
 	public ResponseEntity <String> postUser(@RequestBody User user, @PathVariable int toDoNoteId, UriComponentsBuilder builder)throws HttpMessageNotReadableException, ParseException{
-		//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		
 		RestTemplate restTemplate = new RestTemplate();
 		final String uri = "http://friend:5000/users";
-		HttpHeaders headers = new HttpHeaders();
-		//headers.setContentType(MediaType.APPLICATION_JSON);
-		//HttpEntity<User> = new HttpEntity<User>
-		ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
 		
 		try {
 			ResponseEntity<String> result = restTemplate.postForEntity(uri, user, String.class); 
 			return result;
+			
 		}
 		catch (HttpClientErrorException ex) {
 			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
