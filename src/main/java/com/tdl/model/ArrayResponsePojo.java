@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ArrayResponsePojo {
+	@JsonProperty
 	private User[] data;
+	@JsonProperty
 	private String message;
 	
 	public User[] getData() {

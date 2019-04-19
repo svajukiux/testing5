@@ -61,7 +61,7 @@ public class ToDoNoteController {
 	}
 	
 	@GetMapping("/todos/{toDoNoteId}/users")
-	public ResponseEntity getNotesUsersTest(@PathVariable int toDoNoteId) {
+	public ResponseEntity<ArrayResponsePojo> getNotesUsersTest(@PathVariable int toDoNoteId) {
 		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
 		if(note==null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
@@ -81,14 +81,14 @@ public class ToDoNoteController {
 			System.out.println(testDTO.getData()[0].getFirstName());
 			return result;
 			*/
-			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, ArrayResponsePojo.class); 
+			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, new ParameterizedTypeReference<ArrayResponsePojo>(){}); 
 			return result;
 			
 		}
 		catch (HttpClientErrorException ex) {
-			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
-	                .body(ex.getResponseBodyAsString());
-		     
+			//return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+	         //       .body(ex.getResponseBodyAsString());
+		     return null;
 		}
 		//Resource<ToDoNote> resource = new Resource<ToDoNote>(note);
 		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId)).withSelfRel();

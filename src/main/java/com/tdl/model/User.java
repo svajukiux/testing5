@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class User {
-	 
+	 @JsonProperty
 	 private String email;
+	 @JsonProperty
 	 private String firstName;
+	 @JsonProperty
 	 private String lastName;
 	 
 	// @JsonCreator
