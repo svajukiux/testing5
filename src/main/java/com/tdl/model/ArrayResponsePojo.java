@@ -23,6 +23,7 @@ public class ArrayResponsePojo {
 	
 	public ArrayResponsePojo(){
 	}
+	
 	//@JsonCreator
 	//public ArrayResponsePojo(@JsonProperty("data") User[] data, @JsonProperty ("message") String message) {
 	//	super();

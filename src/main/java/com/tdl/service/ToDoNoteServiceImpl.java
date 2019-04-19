@@ -35,11 +35,11 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		User user1 = new User("labas","ate","gello@gmail.com");
-		User user2 = new User("m8","b8","Ihave@gmail.com");
+		//User user1 = new User("labas","ate","gello@gmail.com");
+		//User user2 = new User("m8","b8","Ihave@gmail.com");
 		
-		workout1.addUser(user1);
-		workout1.addUser(user2);
+		//workout1.addUser(user1);
+		//workout1.addUser(user2);
 		//ToDoNote workout2 = new ToDoNote(2, "Just workout",  new Date()   , "Full Body Day", 2, false);
 		//ToDoNote workout3 = new ToDoNote(3, "An workout",  new Date()  , "Sleep Day", 2, false);
 		
