@@ -78,7 +78,7 @@ public class ToDoNoteController {
 			ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
 			Gson g = new Gson();
 			ArrayResponsePojo testDTO = g.fromJson(result.getBody(), ArrayResponsePojo.class); 
-			System.out.println(testDTO.getMessage());
+			System.out.println(testDTO.getData()[0]);
 			return result;
 			
 		}
