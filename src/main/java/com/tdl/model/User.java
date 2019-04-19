@@ -9,13 +9,13 @@ public class User {
 	 private String firstName;
 	 private String lastName;
 	 
-	 @JsonCreator
-	 public User(@JsonProperty("email")String email,@JsonProperty("firstName") String firstName, @JsonProperty("lastName") String lastName) {
-		super();
-		this.email = email;
-		this.firstName = firstName;
-		this.lastName = lastName;
-	}
+	// @JsonCreator
+	 //public User(@JsonProperty("email")String email,@JsonProperty("firstName") String firstName, @JsonProperty("lastName") String lastName) {
+	//	super();
+	//	this.email = email;
+	//	this.firstName = firstName;
+	//	this.lastName = lastName;
+	//}
 	 
 	public String getEmail() {
 	     return email;

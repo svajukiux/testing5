@@ -23,11 +23,11 @@ public class ArrayResponsePojo {
 	
 	public ArrayResponsePojo(){
 	}
-	@JsonCreator
-	public ArrayResponsePojo(@JsonProperty("data") User[] data, @JsonProperty ("message") String message) {
-		super();
-		this.data = data;
-		this.message = message;
-	}
+	//@JsonCreator
+	//public ArrayResponsePojo(@JsonProperty("data") User[] data, @JsonProperty ("message") String message) {
+	//	super();
+	//	this.data = data;
+	//	this.message = message;
+	//}
 	
 }
