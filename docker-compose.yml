@@ -7,16 +7,12 @@ services:
       - "80:5001"
     depends_on:
     - friendservice
-    volumes:
-    - .:/code
     networks:
     - mynet
     container_name: base
   friendservice:
     build: ./Pirmas
     command: python app.py
-    volumes:
-    - ./Pirmas:/code
     ports:
     - 5000:5000
     container_name: friend
