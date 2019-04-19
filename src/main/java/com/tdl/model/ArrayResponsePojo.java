@@ -21,7 +21,9 @@ public class ArrayResponsePojo {
 	}
 	
 	
+	
 	public ArrayResponsePojo(){
+		super();
 	}
 	
 	//@JsonCreator

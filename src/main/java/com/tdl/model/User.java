@@ -37,6 +37,7 @@ public class User {
 	     this.lastName = lastName;
 	 }
      public User(){
- 	}
+    	 super();
+ 		}
 
 }
