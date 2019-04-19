@@ -19,7 +19,10 @@ public class ArrayResponsePojo {
 		this.message = message;
 	}
 	
-	@JsonCreator
+	
+	public ArrayResponsePojo(){
+	}
+	//@JsonCreator
 	public ArrayResponsePojo(User[] data, String message) {
 		super();
 		this.data = data;
