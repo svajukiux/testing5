@@ -1,6 +1,7 @@
 package com.tdl.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class User {
 	 
@@ -9,7 +10,7 @@ public class User {
 	 private String lastName;
 	 
 	 @JsonCreator
-	 public User(String email, String firstName, String lastName) {
+	 public User(@JsonProperty("email")String email,@JsonProperty("firstName") String firstName, @JsonProperty("lastName") String lastName) {
 		super();
 		this.email = email;
 		this.firstName = firstName;

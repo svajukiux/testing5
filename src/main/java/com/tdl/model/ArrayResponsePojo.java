@@ -1,6 +1,7 @@
 package com.tdl.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ArrayResponsePojo {
 	private User[] data;
@@ -22,8 +23,8 @@ public class ArrayResponsePojo {
 	
 	public ArrayResponsePojo(){
 	}
-	//@JsonCreator
-	public ArrayResponsePojo(User[] data, String message) {
+	@JsonCreator
+	public ArrayResponsePojo(@JsonProperty("data") User[] data, @JsonProperty ("message") String message) {
 		super();
 		this.data = data;
 		this.message = message;

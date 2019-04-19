@@ -67,18 +67,22 @@ public class ToDoNoteController {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
 			
 		}
+		
 		RestTemplate restTemplate = new RestTemplate();
-		final String uri = "http://friend:5000/users";
+		final String uri = "http://193.219.91.103:1858/users";
 		
 		try {
 			HttpHeaders requestHeaders = new HttpHeaders();
 			requestHeaders.setContentType(MediaType.APPLICATION_JSON);
 			HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
 			//ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
-			ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
+			/*ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
 			Gson g = new Gson();
 			ArrayResponsePojo testDTO = g.fromJson(result.getBody(), ArrayResponsePojo.class); 
 			System.out.println(testDTO.getData()[0].getFirstName());
+			return result;
+			*/
+			ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,entity, ArrayResponsePojo.class);
 			return result;
 			
 		}
