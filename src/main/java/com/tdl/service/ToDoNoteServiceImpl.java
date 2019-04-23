@@ -43,6 +43,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			e.printStackTrace();
 		}
 		RestTemplate restTemplate = new RestTemplate();
+		
 		final String uri = "http://friend:5000/"; //2nd service database fill
 		
 		try {

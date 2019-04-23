@@ -13,10 +13,10 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
 	  public void onApplicationEvent(final ApplicationReadyEvent event) {
 	 
 		RestTemplate restTemplate = new RestTemplate();
-		final String uri = "http://friend:5000/";
+		//final String uri = "http://friend:5000/";
 		
 		try {
-			ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class); 
+			//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class); 
 			return;
 			
 		}
