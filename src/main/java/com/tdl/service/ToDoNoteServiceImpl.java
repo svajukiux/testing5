@@ -64,7 +64,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			ArrayList<User> users = response.getData(); // at start there are 3 users
 			workout1.addUser(users.get(0));
 			workout2.addUser(users.get(1));
-			workout3.addUser(users.get(2));
+			//workout3.addUser(users.get(2));
 		}
 		
 		catch (HttpClientErrorException | IOException ex) {
