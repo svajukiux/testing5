@@ -91,11 +91,11 @@ public class ToDoNoteController {
 	
 	// unchecked types
 	@GetMapping("/todos") // booo cia reikes List<Resources<ToDoNoteDto>
-	public Resources<?> getAllToDoNote(@RequestParam(value = "embedded",required =false)String embedded){
+	public Resources<?> getAllToDoNote(@RequestParam(value = "embed",required =false)String embed){
 		List<Resource<ToDoNote>> noteResources = new ArrayList<Resource<ToDoNote>>();
 		List<ToDoNote> allNotes = toDoNoteService.getAllToDoNote();
 			
-		if(embedded!=null && embedded.equals("true")) {
+		if(embed!=null && embed.equals("users")) {
 			for(int i=0; i< allNotes.size();i++) {
 			Resource<ToDoNote> noteResource = new Resource<>(allNotes.get(i));
 			//Link linkTo = linkTo(methodOn(this.getClass()).getNotesUsers(allNotes.get(i).getId())).withRel("users");
@@ -205,7 +205,7 @@ public class ToDoNoteController {
 	}
 	
 	@GetMapping("/todos/{toDoNoteId}")
-	public Resource<?> getToDoNoteById(@PathVariable int toDoNoteId,@RequestParam(value = "embedded",required =false)String embedded) {
+	public Resource<?> getToDoNoteById(@PathVariable int toDoNoteId,@RequestParam(value = "embed",required =false)String embed) {
 		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
 		if(note==null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
@@ -214,7 +214,7 @@ public class ToDoNoteController {
 		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId,"false")).withSelfRel();
 		Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("true")).withRel("allTodos");
 		Link linkToFull =  linkTo(methodOn(this.getClass()).getNotesUsers(toDoNoteId)).withRel("users");
-		if(embedded!=null && embedded.equals("true")) {
+		if(embed!=null && embed.equals("true")) {
 			Resource<ToDoNote> resource = new Resource<ToDoNote>(note);
 			resource.add(linkToAll);
 			return resource;

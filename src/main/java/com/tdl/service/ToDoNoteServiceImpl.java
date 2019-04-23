@@ -42,11 +42,11 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	//	RestTemplate restTemplate = new RestTemplate();
-	//	final String uri = "http://friend:5000/"; //2nd service database fill
+		RestTemplate restTemplate = new RestTemplate();
+		final String uri = "http://friend:5000/"; //2nd service database fill
 		
 		try {
-			//restTemplate.getForEntity(uri, String.class); 
+			restTemplate.getForEntity(uri, String.class); 
 			//return;
 			
 		}
@@ -54,7 +54,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			ex.printStackTrace();
 		     
 		}
-		/*
+		
 		final String uriGet = "http://friend:5000/users";
 		try {
 			ResponseEntity<String> startingUsers =restTemplate.getForEntity(uriGet, String.class); 
@@ -70,7 +70,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			ex.printStackTrace();
 		     
 		}
-		*/
+		
 		
 		todos.add(workout1);
 		todos.add(workout2);
