@@ -1,14 +1,13 @@
-Norint paleisti web servisą reikia paleisti šias komandas:
+Norint paleisti web servisą reikia paleisti komandą:
 
-docker image build -t todolist .
-
-docker container run --name listservice -p 80:5000 -d todolist
+docker-compose up --build -d
 
 Tada galima eiti:
 
-/todos - su GET pamatyti visus įrašus su POST pridėti naują 
+/todos/id - su GET pamatyti visus įrašus ir Link į Userius. su Patch/Put redaguoti įrašą. su DELETE ištrina įrašą.
 
-/todos/id su GET pamatyti specifini įrašą(su DELETE ištrinti specifinį įrašą
+/todos/id/users - su GET pamatyti visus įrašo Userius. su POST pridėti naują Userį
 
-/todos/priority/number - gražina visus įrašus kurių priority yra number
-su PUT koreguoti esantį įrašą
+/todos?embed=users - su GET pamatyti visus įrašus ir Link į Userius
+
+/todos/id/users/email - su GET gauti Userį. su Patch/Put redaguoti Userį. su DELETE ištrina Userį.

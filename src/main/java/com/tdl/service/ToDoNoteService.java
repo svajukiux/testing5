@@ -6,15 +6,15 @@ import com.tdl.model.*;
 
 public interface ToDoNoteService {
 	
-	public List<ToDoNote> getAllToDoNote();
+	public List<ToDoNoteDTO> getAllToDoNoteDTO();
 	
-	public ToDoNote getToDoNoteById(Integer id);
+	public ToDoNoteDTO getToDoNoteDTOById(Integer id);
 	
-	public ToDoNote addToDoNote(ToDoNote toDoNote);
+	public ToDoNoteDTO addToDoNoteDTO(ToDoNoteDTO toDoNote);
 	
-	public void updateToDoNote(ToDoNote toDoNote);
+	public void updateToDoNoteDTO(ToDoNoteDTO toDoNote);
 	
-	public void deleteToDoNote(Integer id);
+	public void deleteToDoNoteDTO(Integer id);
 	
-	public List<User> getAllNotesUsers(ToDoNote toDoNote);
+	public List<String> getAllNotesUsers(ToDoNoteDTO toDoNote);
 }

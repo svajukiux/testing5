@@ -4,6 +4,7 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,6 +45,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -91,49 +94,74 @@ public class ToDoNoteController {
 	
 	// unchecked types
 	@GetMapping("/todos") // booo cia reikes List<Resources<ToDoNoteDto>
-	public Resources<?> getAllToDoNote(@RequestParam(value = "embed",required =false)String embed){
-		List<Resource<ToDoNote>> noteResources = new ArrayList<Resource<ToDoNote>>();
-		List<ToDoNote> allNotes = toDoNoteService.getAllToDoNote();
+	public ResponseEntity<?> getAllToDoNote(@RequestParam(value = "embed",required =false)String embed) throws ParseException, JsonParseException, JsonMappingException, IOException{
+		List<ToDoNote> notes = new ArrayList<ToDoNote>();
+		List<ToDoNoteDTO> notesDTO = new ArrayList<ToDoNoteDTO>();
+		notesDTO = toDoNoteService.getAllToDoNoteDTO(); // turim notes su emailais jei ne embed=users galima toki ir grazinti
+		//List<ToDoNote> allNotes = toDoNoteService.getAllToDoNote();
+		
+		// buildas yra kur docker failas mazdaug
+		
+		
 			
 		if(embed!=null && embed.equals("users")) {
-			for(int i=0; i< allNotes.size();i++) {
-			Resource<ToDoNote> noteResource = new Resource<>(allNotes.get(i));
-			//Link linkTo = linkTo(methodOn(this.getClass()).getNotesUsers(allNotes.get(i).getId())).withRel("users");
+			//ArrayList<String> emails = new ArrayList<String>();
+			RestTemplate restTemplate = new RestTemplate();
+			for(int i=0; i< notesDTO.size();i++) {
+				ArrayList<String> emails = notesDTO.get(i).getUserEmails();
+				if(!emails.isEmpty()) { // jei ne empty email ArrayList
+					ArrayList<User> users = new ArrayList<User>();
+					for(int j=0; j<emails.size(); j++) {
+						final String uri = "http://193.219.91.103:1858/users/"+emails.get(j);
+						ResponseEntity<String> result =null;
+						int statusCode=0;
+						ObjectMapper mapper = new ObjectMapper();
+						//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
+						try { // If user exists we will just add it to our ToDoNote
+							 result = restTemplate.getForEntity(uri, String.class);
+							 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+							 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+							 users.add(userResponse);
+							
+						}
+						catch (HttpClientErrorException ex) {
+							return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+					                .body(ex.getResponseBodyAsString());     
+						}
+						catch(RestClientException ex2) {
+							if(ex2.getCause() instanceof ConnectException) {
+								System.out.println(ex2.getCause());
+								return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.CONFLICT);
+							}
+						}
+						
+						// get is kito web serviso pagal emailus
+					}
+					ToDoNote toDoNote = convertToEntity(notesDTO.get(i),true);
+					toDoNote.setUsers(users);
+					notes.add(toDoNote);
+					// konvertuoti dto i note ir pridet prie jo userius
+				}
+				ToDoNote toDoNote = convertToEntity(notesDTO.get(i),true);
+				notes.add(toDoNote);
 			
-			//noteResource.add(linkTo);
-			noteResources.add(noteResource);
 			}
-			//return null;
-			//return toDoNoteService.getAllToDoNote();
-			return new Resources<>(noteResources);
+			return new ResponseEntity<List<ToDoNote>>(notes,HttpStatus.OK);
+			
+			//return new Resources<>(noteResources);
 		}
 		
 		else {
-			//System.out.println("embedded " +embedded);
-			List<Resource<ToDoNoteDTO>> dtoResources = new ArrayList<Resource<ToDoNoteDTO>>();
-			notes = toDoNoteService.getAllToDoNote();
-			List<ToDoNoteDTO> noteDtos = new ArrayList<ToDoNoteDTO>();
-			for(int i=0; i<notes.size(); i++) {
-				//System.out.println("size" +notes.get(i).getName());
-				noteDtos.add(convertToDto(notes.get(i)));
-			}
 			
-			for(int i=0; i< noteDtos.size();i++) {
-				Resource<ToDoNoteDTO> dtoResource = new Resource<>(noteDtos.get(i));
-				Link linkTo = linkTo(methodOn(this.getClass()).getNotesUsers(allNotes.get(i).getId())).withRel("users");
-				
-				dtoResource.add(linkTo);
-				dtoResources.add(dtoResource);
-				}
 			
-			return new Resources<>(dtoResources);
+			return new ResponseEntity<List<ToDoNoteDTO>>(notesDTO,HttpStatus.OK);
 			//return null;
 		}
 		
 	}
 	
 	
-	
+/*	
 	@GetMapping("/todos/{toDoNoteId}/users")
 	public List<User> getNotesUsers(@PathVariable int toDoNoteId) {
 		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
@@ -168,7 +196,7 @@ public class ToDoNoteController {
 			ArrayResponsePojo testDTO = g.fromJson(result.getBody(), ArrayResponsePojo.class); 
 			System.out.println(testDTO.getData()[0].getFirstName());
 			return result;
-			*/
+			
 			List<User> users = toDoNoteService.getAllNotesUsers(note);
 			//ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, new ParameterizedTypeReference<ArrayResponsePojo>(){}); 
 			return users;
@@ -212,11 +240,11 @@ public class ToDoNoteController {
 			
 		}
 		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId,"false")).withSelfRel();
-		Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("true")).withRel("allTodos");
+		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("true")).withRel("allTodos");
 		Link linkToFull =  linkTo(methodOn(this.getClass()).getNotesUsers(toDoNoteId)).withRel("users");
-		if(embed!=null && embed.equals("true")) {
+		if(embed!=null && embed.equals("users")) {
 			Resource<ToDoNote> resource = new Resource<ToDoNote>(note);
-			resource.add(linkToAll);
+			//resource.add(linkToAll);
 			return resource;
 			
 		}
@@ -225,7 +253,7 @@ public class ToDoNoteController {
 			Resource<ToDoNoteDTO> resource = new Resource<ToDoNoteDTO>(noteDto);
 			//resource.add(linkToSelf);
 			resource.add(linkToFull);
-			resource.add(linkToAll);
+			//resource.add(linkToAll);
 			return resource;
 		}
 		
@@ -269,6 +297,8 @@ public class ToDoNoteController {
 	
 	
 	
+	
+	
 	@GetMapping("/todos/{toDoNoteId}/users/{email}")
 	public Resource<User> getUserByEmail(@PathVariable int toDoNoteId,@PathVariable String email) {
 		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
@@ -276,8 +306,8 @@ public class ToDoNoteController {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
 			
 		}
-		Link linkToSelf =  linkTo(methodOn(this.getClass()).getUserByEmail(toDoNoteId,email)).withSelfRel();
-		Link linkToAll =  linkTo(methodOn(this.getClass()).getNotesUsers(toDoNoteId)).withRel("allNotes");
+		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getUserByEmail(toDoNoteId,email)).withSelfRel();
+		//Link linkToAll =  linkTo(methodOn(this.getClass()).getNotesUsers(toDoNoteId)).withRel("allNotes");
 		
 		//System.out.println("email: " + email);
 		User user = toDoNoteService.getUserFromNote(toDoNoteId, email);
@@ -289,17 +319,17 @@ public class ToDoNoteController {
 		
 		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId,"false")).withSelfRel();
 		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("labas")).withRel("allTodos");
-		resource.add(linkToSelf);
-		resource.add(linkToAll);
+		//resource.add(linkToSelf);
+		//resource.add(linkToAll);
 		return resource;
 		
 		
 	}
 	
 	@PostMapping("/todos/{toDoNoteId}/users")
-	public ResponseEntity<?> addUserToNote(@RequestBody User user,@PathVariable int toDoNoteId) throws JsonParseException, JsonMappingException, IOException{
+	public ResponseEntity<?> addUserToNote(@RequestBody User user,@PathVariable int toDoNoteId) throws JsonParseException, JsonMappingException, ConnectException, IOException{
 		String email = user.getEmail();
-		final String uri = "http://friend:5000/users/"+email;
+		final String uri = "http://193.219.91.103:1858/users/"+email;
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<String> result =null;
 		int statusCode=0;
@@ -322,20 +352,28 @@ public class ToDoNoteController {
 			 	}
 
 			//System.out.println("result" + result);
-			
+			//testing lag
 			
 		}
+		
 		catch (HttpClientErrorException ex) {
 			System.out.println("value"+ ex.getStatusCode().value());
-			statusCode=ex.getStatusCode().value();
-			
-			
-		     
+			statusCode=ex.getStatusCode().value();     
 		}
+		catch(RestClientException ex2) {
+			if(ex2.getCause() instanceof ConnectException) {
+				System.out.println(ex2.getCause());
+				return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.CONFLICT);
+			}
+		}
+		
+	
+		
+		
 		try { // If user does not exist by the given email we can POST
 			if(statusCode==404) {
 				if(user.getEmail()==null || user.getFirstName()==null || user.getLastName()==null) {
-					 return new ResponseEntity<String>("\"Required fields are missing( required fields are email,firstName,LastName\"",HttpStatus.BAD_REQUEST);
+					 return new ResponseEntity<String>("\"Required fields are missing( required fields are email,firstName,LastName)\"",HttpStatus.BAD_REQUEST);
 				}
 				final String uriPost = "http://friend:5000/users";
 				result= restTemplate.postForEntity(uriPost, user, String.class);
@@ -480,14 +518,14 @@ public class ToDoNoteController {
 		//headers.setLocation(builder.path("/todos/{id}").buildAndExpand(toDoNote.getId()).toUri());
 		//return new ResponseEntity<ToDoNote>(toDoNote,headers, HttpStatus.CREATED);
 	}
-	*/
+	
 	
 	
 	@PostMapping("/todos") 
-	public ResponseEntity<ToDoNoteDTO> addNote(@RequestBody ToDoNoteDTO newNoteDto, UriComponentsBuilder builder)throws HttpMessageNotReadableException, ParseException{
+	public ResponseEntity<ToDoNoteDTO> addNote(@RequestBody ToDoNote newNoteDto, UriComponentsBuilder builder)throws HttpMessageNotReadableException, ParseException{
 		//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		
-		
+		System.out.println(newNoteDto.getUsers());
 		
 		//toDoNote.us
 		
@@ -499,14 +537,15 @@ public class ToDoNoteController {
 			throw new InvalidFieldException("Invalid Date");
 		}
 		
-		ToDoNote toDoNote = convertToEntity(newNoteDto,true);
+		//ToDoNote toDoNote = convertToEntity(newNoteDto,true);
 		
-		toDoNote=toDoNoteService.addToDoNote(toDoNote);
-		newNoteDto.setId(toDoNote.getId());
+		//toDoNote=toDoNoteService.addToDoNote(toDoNote);
+		//newNoteDto.setId(toDoNote.getId());
 		
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(builder.path("/todos/{id}").buildAndExpand(toDoNote.getId()).toUri());
-		return new ResponseEntity<ToDoNoteDTO>(newNoteDto,headers, HttpStatus.CREATED);
+		//HttpHeaders headers = new HttpHeaders();
+		//headers.setLocation(builder.path("/todos/{id}").buildAndExpand(toDoNote.getId()).toUri());
+		//return new ResponseEntity<ToDoNoteDTO>(newNoteDto,headers, HttpStatus.CREATED);
+		return null;
 	}
 	/*
 	@PutMapping("/todos")
@@ -543,7 +582,7 @@ public class ToDoNoteController {
 		
 		
 	}
-	*/
+	
 	
 	@PutMapping("/todos/{id}")
 	public ResponseEntity<ToDoNoteDTO> updateToDoNote(@Valid @RequestBody ToDoNoteDTO noteDto, @PathVariable int id) throws ParseException{
@@ -615,7 +654,7 @@ public class ToDoNoteController {
 		return new ResponseEntity<ToDoNoteDTO>(HttpStatus.NO_CONTENT);
 	}
 	
-	
+	*/
 	
 	private ToDoNoteDTO convertToDto(ToDoNote note) {
 	    ToDoNoteDTO noteDto = modelMapper.map(note, ToDoNoteDTO.class);
@@ -629,14 +668,16 @@ public class ToDoNoteController {
         note.setUsers(users);
         return note;
         }
-        else {
-	        if (noteDto.getId() != null) {
-	            ToDoNote oldNote = toDoNoteService.getToDoNoteById(noteDto.getId());
-	            note.setUsers(oldNote.getUsers());
+        
+        return null;
+       // else {
+	     //   if (noteDto.getId() != null) {
+	      //      ToDoNote oldNote = toDoNoteService.getToDoNoteById(noteDto.getId());
+	       //     note.setUsers(oldNote.getUsers());
 	          
-	        }
-        }
-        return note;
+	       // }
+       // }
+       // return note;
     }
 }
 

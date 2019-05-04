@@ -1,6 +1,7 @@
 package com.tdl.service;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -10,41 +11,45 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tdl.model.ArrayResponsePojo;
 import com.tdl.model.ToDoNote;
+import com.tdl.model.ToDoNoteDTO;
 import com.tdl.model.User;
 
 @Component
 public class ToDoNoteServiceImpl implements ToDoNoteService{
 	
-	private static List<ToDoNote> todos = new ArrayList<>();
+	private static List<ToDoNoteDTO> todos = new ArrayList<>();
 	
 	static {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		//Calendar c = Calendar.getInstance();
 		//Date d= new Date();
 		//c.add(Calendar.DATE, 3);
-		ToDoNote workout1 = new ToDoNote(1, "Monday workout",  new Date(), "Leg Day", 1, false);
-		ToDoNote workout2 = new ToDoNote(2, "Just workout",  new Date()   , "Full Body Day", 2, false);
-		ToDoNote workout3 = new ToDoNote(3, "An workout",  new Date()  , "Sleep Day", 2, false);
+		ToDoNoteDTO workout1 = new ToDoNoteDTO(1, "Monday workout",  new Date(), "Leg Day", 1, false);
+		ToDoNoteDTO workout2 = new ToDoNoteDTO(2, "Just workout",  new Date()   , "Full Body Day", 2, false);
+		ToDoNoteDTO workout3 = new ToDoNoteDTO(3, "An workout",  new Date()  , "Sleep Day", 2, false);
 		
 		try {
-			 workout1 = new ToDoNote(1, "Monday workout",  (Date)dateFormat.parse("2019-03-22")   , "Leg Day", 1, false);
-			 workout2 = new ToDoNote(2, "Just workout",  (Date)dateFormat.parse("2019-03-20")   , "Full Body Day", 2, false);
-			 workout3 = new ToDoNote(3, "An workout",  (Date)dateFormat.parse("2019-03-19")  , "Sleep Day", 2, false);
+			 workout1 = new ToDoNoteDTO(1, "Monday workout",  (Date)dateFormat.parse("2019-03-22")   , "Leg Day", 1, false);
+			 workout2 = new ToDoNoteDTO(2, "Just workout",  (Date)dateFormat.parse("2019-03-20")   , "Full Body Day", 2, false);
+			 workout3 = new ToDoNoteDTO(3, "An workout",  (Date)dateFormat.parse("2019-03-19")  , "Sleep Day", 2, false);
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		RestTemplate restTemplate = new RestTemplate();
 		
-		final String uri = "http://friend:5000/"; //2nd service database fill
+		
+		final String uri = "http://193.219.91.103:1858/"; //2nd service database fill
 		
 		try {
 			restTemplate.getForEntity(uri, String.class); 
@@ -56,21 +61,36 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 		     
 		}
 		
-		final String uriGet = "http://friend:5000/users";
+		catch(RestClientException ex2) { // nepavyko prisijungti pacioj pradzioj
+			if(ex2.getCause() instanceof ConnectException) {
+				System.out.println(ex2.getCause());
+				//return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.CONFLICT);
+			}
+		}
+		
+		final String uriGet = "http://193.219.91.103:1858/users";
 		try {
 			ResponseEntity<String> startingUsers =restTemplate.getForEntity(uriGet, String.class); 
 			ObjectMapper mapper = new ObjectMapper();
 			ArrayResponsePojo response = mapper.readValue(startingUsers.getBody(),ArrayResponsePojo.class);
 			ArrayList<User> users = response.getData(); // at start there are 3 users
-			workout1.addUser(users.get(0));
-			workout2.addUser(users.get(1));
-			//workout3.addUser(users.get(2));
+			workout1.addUserEmail(users.get(0).getEmail());
+			workout2.addUserEmail(users.get(1).getEmail());
+			//workout3.addUser(users.get(2)); // vis del to yra tik 2
 		}
 		
 		catch (HttpClientErrorException | IOException ex) {
 			ex.printStackTrace();
 		     
 		}
+		
+		catch(RestClientException ex2) { // nepavyko prisijungti pacioj pradzioj
+			if(ex2.getCause() instanceof ConnectException) {
+				System.out.println(ex2.getCause());
+				//return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.CONFLICT);
+			}
+		}
+		
 		
 		
 		todos.add(workout1);
@@ -79,13 +99,13 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 	}
 	
 	@Override
-	public List<ToDoNote> getAllToDoNote() {
+	public List<ToDoNoteDTO> getAllToDoNoteDTO() {
 		return todos;
 	}
 
 	@Override
-	public ToDoNote getToDoNoteById(Integer id) {
-		for(ToDoNote toDoNote : todos) {
+	public ToDoNoteDTO getToDoNoteDTOById(Integer id) {
+		for(ToDoNoteDTO toDoNote : todos) {
 			if(toDoNote.getId() == id) {
 				return toDoNote;
 			}
@@ -94,10 +114,10 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 	}
 
 	@Override
-	public ToDoNote addToDoNote(ToDoNote toDoNote) {
+	public ToDoNoteDTO addToDoNoteDTO(ToDoNoteDTO toDoNote) {
 		
 		
-		ToDoNote tempNote = todos.get(todos.size()-1);
+		ToDoNoteDTO tempNote = todos.get(todos.size()-1);
 		int id = tempNote.getId()+1;
 		toDoNote.setId(id);
 		todos.add(toDoNote);
@@ -106,8 +126,8 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 	}
 
 	@Override
-	public void updateToDoNote(ToDoNote toDoNote) {
-		for(ToDoNote oldToDoNote : todos) {
+	public void updateToDoNoteDTO(ToDoNoteDTO toDoNote) { // cia nera useriu updatinimo tho
+		for(ToDoNoteDTO oldToDoNote : todos) {
 			if(oldToDoNote.getId() == toDoNote.getId()) {
 				oldToDoNote.setName(toDoNote.getName());
 				oldToDoNote.setDateToComplete(toDoNote.getDateToComplete());
@@ -119,9 +139,9 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 	}
 
 	@Override
-	public void deleteToDoNote(Integer id) {
-		for(Iterator<ToDoNote> it= todos.iterator(); it.hasNext();) {
-			ToDoNote toDoNote = it.next();
+	public void deleteToDoNoteDTO(Integer id) {
+		for(Iterator<ToDoNoteDTO> it= todos.iterator(); it.hasNext();) {
+			ToDoNoteDTO toDoNote = it.next();
 			if(toDoNote.getId() == id) {
 				it.remove();
 				break;
@@ -129,11 +149,13 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 		}
 		
 	}
-	public List<User> getAllNotesUsers(ToDoNote toDoNote){ // pakeisti kad imtu id
-		return toDoNote.getUsers();
+	public List<String> getAllNotesUsers(ToDoNoteDTO toDoNote){ // pakeisti kad imtu id
+		return toDoNote.getUserEmails();
 	
 	}
 	
+	
+	/*
 	public User getUserFromNote(int noteId, String email) {
 		ToDoNote note = this.getToDoNoteById(noteId);
 		ArrayList<User> users = note.getUsers();
@@ -145,12 +167,13 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 		}
 		return null;
 	}
+	*/
 	
 	public void removeUser(int noteId, String email) {
-		ArrayList <User> users = this.getToDoNoteById(noteId).getUsers();
-		for(Iterator<User> it= users.iterator(); it.hasNext();) {
-			User user = it.next();
-			if(user.getEmail().equals(email)) {
+		ArrayList <String> userEmails = this.getToDoNoteDTOById(noteId).getUserEmails();
+		for(Iterator<String> it= userEmails.iterator(); it.hasNext();) {
+			String userEmail = it.next();
+			if(userEmail.equals(email)) {
 				it.remove();
 				break;
 				

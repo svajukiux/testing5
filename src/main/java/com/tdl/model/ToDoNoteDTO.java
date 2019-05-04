@@ -18,6 +18,7 @@ public class ToDoNoteDTO {
 	private String description;
 	private Integer priority;
 	private Boolean completed;
+	private ArrayList<String> userEmails;
 	
 
 	public Boolean getCompleted() {
@@ -28,7 +29,10 @@ public class ToDoNoteDTO {
 		super();
 	}
 
-	public ToDoNoteDTO(Integer id, String name, Date dateToComplete, String description,Integer priority, Boolean completed) {
+	
+
+	public ToDoNoteDTO(Integer id, @NotNull(message = "Name may not be null") String name, Date dateToComplete,
+			String description, Integer priority, Boolean completed, ArrayList<String> emails) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -36,6 +40,28 @@ public class ToDoNoteDTO {
 		this.description = description;
 		this.priority = priority;
 		this.completed = completed;
+		this.userEmails = emails;
+	}
+	
+	public ToDoNoteDTO(Integer id, @NotNull(message = "Name may not be null") String name, Date dateToComplete,
+			String description, Integer priority, Boolean completed) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.dateToComplete = dateToComplete;
+		this.description = description;
+		this.priority = priority;
+		this.completed = completed;
+		this.userEmails = new ArrayList<String>();
+	}
+	
+
+	public ArrayList<String> getUserEmails() {
+		return userEmails;
+	}
+
+	public void setEmails(ArrayList<String> emails) {
+		this.userEmails = emails;
 	}
 
 	public Integer getId() {
@@ -84,6 +110,10 @@ public class ToDoNoteDTO {
 
 	public void setCompleted(Boolean completed) {
 		this.completed = completed;
+	}
+	
+	public void addUserEmail(String userEmail) {
+		this.userEmails.add(userEmail);
 	}
 	
 	

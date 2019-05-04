@@ -9,7 +9,7 @@ services:
     - friendservice
     networks:
     - mynet
-    container_name: base
+    container_name: base_notes
   friendservice:
     build: ./Pirmas
     command: python app.py
