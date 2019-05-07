@@ -720,21 +720,36 @@ public class ToDoNoteController {
 		if(note.getName()!= null){
 			oldNoteDTO.setName(note.getName());
 		}
+		else {
+			note.setName(oldNoteDTO.getName());
+		}
 		
 		if(note.getDateToComplete()!= null){
 			oldNoteDTO.setDateToComplete(note.getDateToComplete());
+		}
+		else {
+			note.setDateToComplete(oldNoteDTO.getDateToComplete());
 		}
 		
 		if(note.getDescription()!= null){
 			oldNoteDTO.setDescription(note.getDescription());
 		}
+		else {
+			note.setDescription(oldNoteDTO.getDescription());
+		}
 		
 		if(note.getPriority()!= null){
 			oldNoteDTO.setPriority(note.getPriority());
 		}
+		else {
+			note.setPriority(oldNoteDTO.getPriority());
+		}
 		
 		if(note.isCompleted()!= null){
 			oldNoteDTO.setCompleted(note.isCompleted());
+		}
+		else {
+			note.setCompleted(oldNoteDTO.isCompleted());
 		}
 		
 		if(note.getUsers()!=null) {
@@ -815,6 +830,35 @@ public class ToDoNoteController {
 			}
 			
 			
+		}
+		
+		else {
+			note.setUsers(new ArrayList<User>());
+			ArrayList<String> emails = oldNoteDTO.getUserEmails();
+			for(int i=0; i< emails.size(); i++) {
+				String currentEmail = emails.get(i);
+				final String uri = "http://friend:5000/users/"+currentEmail;
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<String> result =null;
+				int statusCode=0;
+				ObjectMapper mapper = new ObjectMapper();
+				try {
+					result = restTemplate.getForEntity(uri, String.class);
+					 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+					 User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+					 note.addUser(userToRespond);
+				}
+				catch (HttpClientErrorException ex) {
+					System.out.println("value"+ ex.getStatusCode().value());
+					statusCode=ex.getStatusCode().value();     
+				}
+				catch(RestClientException ex2) {
+					if(ex2.getCause() instanceof ConnectException) {
+						System.out.println(ex2.getCause());
+						return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				}
+			}
 		}
 		
 		
