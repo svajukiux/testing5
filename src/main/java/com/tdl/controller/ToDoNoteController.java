@@ -258,6 +258,7 @@ public class ToDoNoteController {
 					ObjectMapper mapper = new ObjectMapper();
 					//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
 					try { // If user exists we will just add it to our ToDoNote
+						System.out.println("pre: "+result);
 						 result = restTemplate.getForEntity(uri, String.class);
 						 System.out.println(result);
 						 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
@@ -273,6 +274,9 @@ public class ToDoNoteController {
 						if(ex2.getCause() instanceof ConnectException) {
 							System.out.println(ex2.getCause());
 							return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
+						}
+						else {
+							System.out.println("kazkas kitkas");
 						}
 					}
 					
