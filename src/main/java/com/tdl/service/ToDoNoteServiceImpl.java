@@ -49,7 +49,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 		RestTemplate restTemplate = new RestTemplate();
 		
 		
-		final String uri = "http://193.219.91.103:1858/"; //2nd service database fill
+		final String uri = "http://friend:5000/"; //2nd service database fill
 		
 		try {
 			restTemplate.getForEntity(uri, String.class); 
@@ -68,7 +68,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			}
 		}
 		
-		final String uriGet = "http://193.219.91.103:1858/users";
+		final String uriGet = "http://friend:5000/users";
 		try {
 			ResponseEntity<String> startingUsers =restTemplate.getForEntity(uriGet, String.class); 
 			ObjectMapper mapper = new ObjectMapper();
