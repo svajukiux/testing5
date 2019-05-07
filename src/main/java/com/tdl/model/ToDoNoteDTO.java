@@ -116,6 +116,15 @@ public class ToDoNoteDTO {
 		this.userEmails.add(userEmail);
 	}
 	
+	public String getUser(String email) {
+		for(int i=0; i<userEmails.size();i++) {
+			if(userEmails.get(i).equals(email)) {
+				return email;
+			}
+		}
+		return null;
+	}
+	
 	public boolean checkIfUserExists(User user) {
 		for(int i=0; i<userEmails.size(); i++) {
 			if(userEmails.get(i).equals(user.getEmail())) {

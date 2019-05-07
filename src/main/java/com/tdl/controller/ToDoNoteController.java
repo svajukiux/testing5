@@ -131,7 +131,7 @@ public class ToDoNoteController {
 						catch(RestClientException ex2) {
 							if(ex2.getCause() instanceof ConnectException) {
 								System.out.println(ex2.getCause());
-								return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+								return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 							}
 						}
 						
@@ -202,7 +202,7 @@ public class ToDoNoteController {
 				catch(RestClientException ex2) {
 					if(ex2.getCause() instanceof ConnectException) {
 						System.out.println(ex2.getCause());
-						return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+						return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 					}
 				}
 
@@ -267,7 +267,7 @@ public class ToDoNoteController {
 					catch(RestClientException ex2) {
 						if(ex2.getCause() instanceof ConnectException) {
 							System.out.println(ex2.getCause());
-							return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+							return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
 						}
 					}
 					
@@ -329,7 +329,7 @@ public class ToDoNoteController {
 		catch(RestClientException ex2) {
 			if(ex2.getCause() instanceof ConnectException) {
 				System.out.println(ex2.getCause());
-				return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+				return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 			}
 			else {
 				return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
@@ -352,30 +352,37 @@ public class ToDoNoteController {
 			
 		}
 		
-		final String uri = "http://friend:5000/users/"+email;
-		ResponseEntity<String> result =null;
-		int statusCode=0;
-		ObjectMapper mapper = new ObjectMapper();
-		//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
-		try { 
-			 result = restTemplate.getForEntity(uri, String.class);
-			 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
-			 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
-			 return new ResponseEntity<User>(userResponse,HttpStatus.OK);
-			 //users.add(userResponse);
-			
+		if(noteDTO.getUser(email)==null) {
+			throw new ToDoNoteNotFoundException("User with "+ email + " not found");
 		}
-		catch (HttpClientErrorException ex) {
-			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
-	                .body(ex.getResponseBodyAsString());     
-		}
-		catch(RestClientException ex2) {
-			if(ex2.getCause() instanceof ConnectException) {
-				System.out.println(ex2.getCause());
-				return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+		
+		else {
+		
+			final String uri = "http://friend:5000/users/"+email;
+			ResponseEntity<String> result =null;
+			int statusCode=0;
+			ObjectMapper mapper = new ObjectMapper();
+			//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
+			try { 
+				 result = restTemplate.getForEntity(uri, String.class);
+				 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+				 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+				 return new ResponseEntity<User>(userResponse,HttpStatus.OK);
+				 //users.add(userResponse);
+				
 			}
-			else {
-				return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+			catch (HttpClientErrorException ex) {
+				return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+		                .body(ex.getResponseBodyAsString());     
+			}
+			catch(RestClientException ex2) {
+				if(ex2.getCause() instanceof ConnectException) {
+					System.out.println(ex2.getCause());
+					return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
+				}
+				else {
+					return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 			}
 		}
 		
