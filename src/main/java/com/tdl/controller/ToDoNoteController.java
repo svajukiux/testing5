@@ -282,7 +282,7 @@ public class ToDoNoteController {
 			else {
 				toDoNote = convertToEntity(noteDTO,true);
 			}
-			return  new ResponseEntity<ToDoNote>(toDoNote,HttpStatus.CREATED);
+			return  new ResponseEntity<ToDoNote>(toDoNote,HttpStatus.OK);
 		}
 		
 		else {

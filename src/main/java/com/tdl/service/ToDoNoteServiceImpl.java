@@ -73,6 +73,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 			ResponseEntity<String> startingUsers =restTemplate.getForEntity(uriGet, String.class); 
 			ObjectMapper mapper = new ObjectMapper();
 			ArrayResponsePojo response = mapper.readValue(startingUsers.getBody(),ArrayResponsePojo.class);
+			
 			ArrayList<User> users = response.getData(); // at start there are 3 users
 			workout1.addUserEmail(users.get(0).getEmail());
 			workout2.addUserEmail(users.get(1).getEmail());
