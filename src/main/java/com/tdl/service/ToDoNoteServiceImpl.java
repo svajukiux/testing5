@@ -62,10 +62,12 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 		}
 		
 		catch(RestClientException ex2) { // nepavyko prisijungti pacioj pradzioj
+			System.out.println(ex2.getCause());
 			if(ex2.getCause() instanceof ConnectException) {
-				System.out.println(ex2.getCause());
+				//TODO somehow handle it and add the else if same in below connection
 				//return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.CONFLICT);
 			}
+			
 		}
 		
 		final String uriGet = "http://friend:5000/users";

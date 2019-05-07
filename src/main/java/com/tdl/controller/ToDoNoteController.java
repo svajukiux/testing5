@@ -148,6 +148,12 @@ public class ToDoNoteController {
 								System.out.println(ex2.getCause());
 								return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 							}
+							else if(ex2.getCause() instanceof UnknownHostException) {
+								return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+								}
+							else {
+								return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+							}
 						}
 						
 						// get is kito web serviso pagal emailus
@@ -219,6 +225,12 @@ public class ToDoNoteController {
 						System.out.println(ex2.getCause());
 						return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 					}
+					else if(ex2.getCause() instanceof UnknownHostException) {
+						return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+						}
+					else {
+						return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 				}
 
 			}
@@ -288,10 +300,11 @@ public class ToDoNoteController {
 							System.out.println(ex2.getCause());
 							return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
 						}
-							else {
-								if(ex2.getCause() instanceof UnknownHostException) {
-									return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+						else if(ex2.getCause() instanceof UnknownHostException) {
+							return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
 							}
+						else {
+							return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
 						}
 					}
 					
@@ -355,6 +368,11 @@ public class ToDoNoteController {
 				System.out.println(ex2.getCause());
 				return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 			}
+			
+			else if(ex2.getCause() instanceof UnknownHostException) {
+					return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+			}
+		
 			else {
 				return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -404,6 +422,9 @@ public class ToDoNoteController {
 					System.out.println(ex2.getCause());
 					return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 				}
+				else if(ex2.getCause() instanceof UnknownHostException) {
+					return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+					}
 				else {
 					return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -465,6 +486,12 @@ public class ToDoNoteController {
 			if(ex2.getCause() instanceof ConnectException) {
 				System.out.println(ex2.getCause());
 				return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
+			}
+			else if(ex2.getCause() instanceof UnknownHostException) {
+				return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+				}
+			else {
+				return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 		
@@ -591,6 +618,12 @@ public class ToDoNoteController {
 					System.out.println(ex2.getCause());
 					return new ResponseEntity<String>("\"Could not connect to user webservice\"",HttpStatus.SERVICE_UNAVAILABLE);
 				}
+				else if(ex2.getCause() instanceof UnknownHostException) {
+					return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				else {
+					return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 			}
 			
 		
@@ -706,6 +739,12 @@ public class ToDoNoteController {
 				if(ex2.getCause() instanceof ConnectException) {
 					System.out.println(ex2.getCause());
 					return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
+				}
+				else if(ex2.getCause() instanceof UnknownHostException) {
+					return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				else {
+					return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			}
 			
@@ -850,6 +889,12 @@ public class ToDoNoteController {
 						System.out.println(ex2.getCause());
 						return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 					}
+					else if(ex2.getCause() instanceof UnknownHostException) {
+						return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+						}
+					else {
+						return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 				}
 				
 			
@@ -909,7 +954,14 @@ public class ToDoNoteController {
 						System.out.println(ex2.getCause());
 						return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 					}
+					else if(ex2.getCause() instanceof UnknownHostException) {
+						return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+						}
+					else {
+						return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 				}
+				
 			}
 		}
 		
