@@ -414,15 +414,15 @@ public class ToDoNoteController {
 			 result = restTemplate.getForEntity(uri, String.class);
 			 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
 			 User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+			 if(noteDTO.checkIfUserExists(user)==true) {
+					return new ResponseEntity<String>("\"User with this email already exists in this note\"",HttpStatus.CONFLICT);
+			 }
 			 boolean match = checkIfUsersMatch(user,userToRespond);
 			 if(match==false) { // putinam/updatinam kitam web service
 				 HttpEntity<User> userEntity = new HttpEntity<User>(user);
 				 result= restTemplate.exchange(uri, HttpMethod.PUT,userEntity,String.class);
 			 }
 			// ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
-			 if(noteDTO.checkIfUserExists(user)==true) {
-					return new ResponseEntity<String>("\"User already in this note\"",HttpStatus.CONFLICT);
-			 }
 			 	else {
 			 		toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
 			 		HttpHeaders headers = new HttpHeaders();
@@ -442,7 +442,7 @@ public class ToDoNoteController {
 		catch(RestClientException ex2) {
 			if(ex2.getCause() instanceof ConnectException) {
 				System.out.println(ex2.getCause());
-				return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+				return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
 			}
 		}
 		
@@ -513,7 +513,7 @@ public class ToDoNoteController {
 			return ResponseEntity.noContent().build(); // cia reikia naujo exception ten body not found or smth
 		}
 		
-		if(checkIfThereAreDuplicates(newNote)==true) {
+		if(newNote.getUsers()!=null && checkIfThereAreDuplicates(newNote)==true) {
 			return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 		}
 		
@@ -567,7 +567,7 @@ public class ToDoNoteController {
 			catch(RestClientException ex2) {
 				if(ex2.getCause() instanceof ConnectException) {
 					System.out.println(ex2.getCause());
-					return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+					return new ResponseEntity<String>("\"Could not connect to user webservice\"",HttpStatus.SERVICE_UNAVAILABLE);
 				}
 			}
 			
@@ -617,7 +617,7 @@ public class ToDoNoteController {
 			throw new ToDoNoteNotFoundException("Note with id "+ id + " not found");
 		}
 		
-		if(checkIfThereAreDuplicates(note)==true) {
+		if(note.getUsers()!=null && checkIfThereAreDuplicates(note)==true) {
 			return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 		}
 		
@@ -683,7 +683,7 @@ public class ToDoNoteController {
 			catch(RestClientException ex2) {
 				if(ex2.getCause() instanceof ConnectException) {
 					System.out.println(ex2.getCause());
-					return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+					return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 				}
 			}
 			
@@ -736,8 +736,7 @@ public class ToDoNoteController {
 		if(oldNoteDTO == null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ id + " not found");
 		}
-		
-		if(checkIfThereAreDuplicates(note)==true) {
+		if(note.getUsers()!=null && checkIfThereAreDuplicates(note)==true) {
 			return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 		}
 		note.setId(id);
@@ -827,7 +826,7 @@ public class ToDoNoteController {
 				catch(RestClientException ex2) {
 					if(ex2.getCause() instanceof ConnectException) {
 						System.out.println(ex2.getCause());
-						return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+						return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 					}
 				}
 				
@@ -886,7 +885,7 @@ public class ToDoNoteController {
 				catch(RestClientException ex2) {
 					if(ex2.getCause() instanceof ConnectException) {
 						System.out.println(ex2.getCause());
-						return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+						return new ResponseEntity<String>("\"Could not connect to user web service\"",HttpStatus.SERVICE_UNAVAILABLE);
 					}
 				}
 			}
