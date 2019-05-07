@@ -248,8 +248,10 @@ public class ToDoNoteController {
 		if(embed!=null && embed.equals("users")) {
 			ArrayList<String> emails = noteDTO.getUserEmails();
 			ArrayList<User> users = new ArrayList<User>();
+			
 			if(!emails.isEmpty()) {
 				for(int i=0; i<emails.size(); i++) {
+					System.out.println(emails.get(i));
 					final String uri = "http://friend:5000/users/"+emails.get(i);
 					ResponseEntity<String> result =null;
 					int statusCode=0;
@@ -257,6 +259,7 @@ public class ToDoNoteController {
 					//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
 					try { // If user exists we will just add it to our ToDoNote
 						 result = restTemplate.getForEntity(uri, String.class);
+						 System.out.println(result);
 						 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
 						 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
 						 users.add(userResponse);
