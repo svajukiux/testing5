@@ -276,7 +276,7 @@ public class ToDoNoteController {
 							return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
 						}
 						else {
-							System.out.println("kazkas kitkas");
+							System.out.println("kazkas kitkas: " + ex2.getCause());
 						}
 					}
 					
