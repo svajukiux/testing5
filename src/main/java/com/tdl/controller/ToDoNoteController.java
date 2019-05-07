@@ -5,6 +5,7 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -77,6 +78,18 @@ public class ToDoNoteController {
 	
 	private ModelMapper modelMapper = new ModelMapper();
 	private List<ToDoNote> notes;
+	
+	private SimpleClientHttpRequestFactory getClientHttpRequestFactory()
+	{
+	    SimpleClientHttpRequestFactory clientHttpRequestFactory
+	                      = new SimpleClientHttpRequestFactory();
+	    //Connect timeout
+	    clientHttpRequestFactory.setConnectTimeout(2000);
+	     
+	    //Read timeout
+	    clientHttpRequestFactory.setReadTimeout(2000);
+	    return clientHttpRequestFactory;
+	}
 	
 	/*
 	@Bean
@@ -239,7 +252,7 @@ public class ToDoNoteController {
 	public ResponseEntity<?> getToDoNoteById(@PathVariable int toDoNoteId,@RequestParam(value = "embed",required =false)String embed) throws ParseException, JsonParseException, JsonMappingException, IOException {
 		ToDoNoteDTO noteDTO = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
 		ToDoNote toDoNote = null;
-		RestTemplate restTemplate = new RestTemplate();
+		RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory());
 		if(noteDTO==null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
 			
@@ -275,8 +288,10 @@ public class ToDoNoteController {
 							System.out.println(ex2.getCause());
 							return new ResponseEntity<String>("\"Could not connect to user service\"",HttpStatus.SERVICE_UNAVAILABLE);
 						}
-						else {
-							System.out.println("kazkas kitkas: " + ex2.getCause());
+							else {
+								if(ex2.getCause() instanceof UnknownHostException) {
+									return new ResponseEntity<String>("\"Unable to connect to user web service\"", HttpStatus.SERVICE_UNAVAILABLE);
+							}
 						}
 					}
 					
