@@ -9,8 +9,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.Valid;
 
@@ -425,7 +427,7 @@ public class ToDoNoteController {
 			 		toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
 			 		HttpHeaders headers = new HttpHeaders();
 					headers.setLocation(builder.path("/todos/{id}/users/{email}").buildAndExpand(noteDTO.getId(),user.getEmail()).toUri());
-			 		return new ResponseEntity<User>(userToRespond,headers,HttpStatus.CREATED);
+			 		return new ResponseEntity<User>(user,headers,HttpStatus.CREATED);
 			 	}
 
 			//System.out.println("result" + result);
@@ -509,6 +511,10 @@ public class ToDoNoteController {
 		
 		if(newNote==null) {
 			return ResponseEntity.noContent().build(); // cia reikia naujo exception ten body not found or smth
+		}
+		
+		if(checkIfThereAreDuplicates(newNote)==true) {
+			return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 		}
 		
 		if(newNote.getDateToComplete()!=null && newNote.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
@@ -611,6 +617,10 @@ public class ToDoNoteController {
 			throw new ToDoNoteNotFoundException("Note with id "+ id + " not found");
 		}
 		
+		if(checkIfThereAreDuplicates(note)==true) {
+			return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
+		}
+		
 		if(note.getDateToComplete()!=null && note.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
 			throw new InvalidFieldException("Invalid Date");
 		}
@@ -629,6 +639,7 @@ public class ToDoNoteController {
 			note.setUsers(new ArrayList<User>());
 		}
 		ArrayList<User> users = note.getUsers();
+		ArrayList<String> tempEmails = new ArrayList<String>();
 		// eisim per paduotus userius
 		for(int i=0; i<users.size(); i++) {
 			
@@ -654,7 +665,8 @@ public class ToDoNoteController {
 						return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 				 }
 				 	else {
-				 		oldNoteDTO.addUserEmail(tempUser.getEmail());
+				 		tempEmails.add(tempUser.getEmail());
+				 		///oldNoteDTO.addUserEmail(tempUser.getEmail());
 				 		//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
 				 		//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
 				 	}
@@ -686,7 +698,8 @@ public class ToDoNoteController {
 					
 					ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
 					User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
-					oldNoteDTO.addUserEmail(userToRespond.getEmail());
+					tempEmails.add(userToRespond.getEmail());
+					///oldNoteDTO.addUserEmail(userToRespond.getEmail());
 					//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
 					//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
 				}
@@ -698,6 +711,7 @@ public class ToDoNoteController {
 				}
 			
 		}
+		oldNoteDTO.setEmails(tempEmails);
 		toDoNoteService.updateToDoNoteDTO(oldNoteDTO);
 		//toDoNoteService.addToDoNoteDTO(noteDTO);
 		//HttpHeaders headers = new HttpHeaders();
@@ -717,9 +731,14 @@ public class ToDoNoteController {
 	@PatchMapping("/todos/{id}")
 	public ResponseEntity<?> partlyUpdateToDoNote(@RequestBody ToDoNote note, @PathVariable int id) throws JsonParseException, JsonMappingException, IOException{
 		ToDoNoteDTO oldNoteDTO = toDoNoteService.getToDoNoteDTOById(id);
+	
 		
 		if(oldNoteDTO == null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ id + " not found");
+		}
+		
+		if(checkIfThereAreDuplicates(note)==true) {
+			return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 		}
 		note.setId(id);
 		
@@ -763,6 +782,8 @@ public class ToDoNoteController {
 			oldNoteDTO.setEmails(new ArrayList<String>()); // jei kazkas paduota tai sena nuimam
 			
 			ArrayList<User> users = note.getUsers();
+			//ArrayList<String> tempEmails = new ArrayList<String>();
+			
 			// eisim per paduotus userius
 			for(int i=0; i<users.size(); i++) {
 				
@@ -788,6 +809,7 @@ public class ToDoNoteController {
 							return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
 					 }
 					 	else {
+					 		///tempEmails.add(tempUser.getEmail());
 					 		oldNoteDTO.addUserEmail(tempUser.getEmail());
 					 		//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
 					 		//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
@@ -823,6 +845,7 @@ public class ToDoNoteController {
 						
 						ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
 						User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+						///tempEmails.add(userToRespond.getEmail());
 						oldNoteDTO.addUserEmail(userToRespond.getEmail());
 						//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
 						//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
@@ -835,7 +858,8 @@ public class ToDoNoteController {
 					}
 				
 			}
-			
+			//oldNoteDTO.setEmails(tempEmails);
+			toDoNoteService.updateToDoNoteDTO(oldNoteDTO);
 			
 		}
 		
@@ -916,6 +940,21 @@ public class ToDoNoteController {
 	boolean checkIfUsersMatch(User user1, User user2) { // galimai reikes pakeisti
 		if(user1.equals(user2)) {
 			return true;
+		}
+		return false;
+	}
+	
+	boolean checkIfThereAreDuplicates(ToDoNote note) {
+		ArrayList<User> users = note.getUsers();
+		List<String>emails = new ArrayList<String>();
+		for(int i=0; i<users.size();i++) {
+			emails.add(users.get(i).getEmail());
+		}
+		Set<String> set = new HashSet<String>();
+		for(String each: emails) {
+			if(!set.add(each)) {
+				return true;
+			}
 		}
 		return false;
 	}
