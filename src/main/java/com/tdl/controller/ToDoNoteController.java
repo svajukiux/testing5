@@ -615,6 +615,7 @@ public class ToDoNoteController {
 		oldNoteDTO.setDescription(note.getDescription());
 		oldNoteDTO.setPriority(note.getPriority());
 		oldNoteDTO.setCompleted(note.isCompleted());
+		oldNoteDTO.setEmails(new ArrayList<String>()); // nuimam senus useriu emailus
 		
 		
 		if(note.getUsers()==null) { // jeigu Useriai nepaduoti tiesiog sukuriam tuscia
@@ -737,6 +738,7 @@ public class ToDoNoteController {
 		}
 		
 		if(note.getUsers()!=null) {
+			oldNoteDTO.setEmails(new ArrayList<String>()); // jei kazkas paduota tai sena nuimam
 			
 			ArrayList<User> users = note.getUsers();
 			// eisim per paduotus userius
