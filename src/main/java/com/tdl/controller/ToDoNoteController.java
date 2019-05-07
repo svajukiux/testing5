@@ -586,7 +586,7 @@ public class ToDoNoteController {
 		}
 		toDoNoteService.addToDoNoteDTO(noteDTO);
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(builder.path("/todos/{id}"+"?"+"embedded=true").buildAndExpand(noteDTO.getId()).toUri());
+		headers.setLocation(builder.path("/todos/{id}").queryParam("embed", "users").buildAndExpand(noteDTO.getId()).toUri());
 		newNote.setId(noteDTO.getId()); // reikia nes laikome DTO objektus tai niekad newNote neuzsetins id
 		return new ResponseEntity<ToDoNote>(newNote,headers, HttpStatus.CREATED);
 		
