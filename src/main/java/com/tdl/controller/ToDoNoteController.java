@@ -112,7 +112,7 @@ public class ToDoNoteController {
 				if(!emails.isEmpty()) { // jei ne empty email ArrayList
 					ArrayList<User> users = new ArrayList<User>();
 					for(int j=0; j<emails.size(); j++) {
-						final String uri = "http://193.219.91.103:1858/users/"+emails.get(j);
+						final String uri = "http://friend:5000/users/"+emails.get(j);
 						ResponseEntity<String> result =null;
 						int statusCode=0;
 						ObjectMapper mapper = new ObjectMapper();
@@ -131,7 +131,7 @@ public class ToDoNoteController {
 						catch(RestClientException ex2) {
 							if(ex2.getCause() instanceof ConnectException) {
 								System.out.println(ex2.getCause());
-								return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.CONFLICT);
+								return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
 							}
 						}
 						
@@ -142,8 +142,10 @@ public class ToDoNoteController {
 					notes.add(toDoNote);
 					// konvertuoti dto i note ir pridet prie jo userius
 				}
-				ToDoNote toDoNote = convertToEntity(notesDTO.get(i),true);
-				notes.add(toDoNote);
+				else {
+					ToDoNote toDoNote = convertToEntity(notesDTO.get(i),true);
+					notes.add(toDoNote);
+				}
 			
 			}
 			return new ResponseEntity<List<ToDoNote>>(notes,HttpStatus.OK);
@@ -161,10 +163,12 @@ public class ToDoNoteController {
 	}
 	
 	
-/*	
+	
 	@GetMapping("/todos/{toDoNoteId}/users")
-	public List<User> getNotesUsers(@PathVariable int toDoNoteId) {
-		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
+	public ResponseEntity<?> getNotesUsers(@PathVariable int toDoNoteId) throws JsonParseException, JsonMappingException, IOException {
+		ToDoNoteDTO note = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
+		RestTemplate restTemplate = new RestTemplate();
+		List<User> users = new ArrayList<User>();
 		//final String uriTest = "http://193.219.91.103:1858/";
 
 	    //RestTemplate restTemplateTest = new RestTemplate();
@@ -176,46 +180,41 @@ public class ToDoNoteController {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
 			
 		}
+		ArrayList<String> emails = note.getUserEmails();
+		if(!emails.isEmpty()) {
+			for(int i=0; i<emails.size(); i++) {
+				final String uri = "http://friend:5000/users/"+emails.get(i);
+				ResponseEntity<String> result =null;
+				int statusCode=0;
+				ObjectMapper mapper = new ObjectMapper();
+				//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
+				try { // If user exists we will just add it to our ToDoNote
+					 result = restTemplate.getForEntity(uri, String.class);
+					 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+					 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+					 users.add(userResponse);
+					
+				}
+				catch (HttpClientErrorException ex) {
+					return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+			                .body(ex.getResponseBodyAsString());     
+				}
+				catch(RestClientException ex2) {
+					if(ex2.getCause() instanceof ConnectException) {
+						System.out.println(ex2.getCause());
+						return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				}
+
+			}
+		}
+		return new ResponseEntity<List<User>>(users,HttpStatus.OK);
 		
-		
-		//RestTemplate restTemplate = new RestTemplate();
-		//restTemplate.setRequestFactory(new SimpleClientHttpRequestFactory());
-       // SimpleClientHttpRequestFactory rf = (SimpleClientHttpRequestFactory) restTemplate
-        //        .getRequestFactory();
-        //rf.setReadTimeout(2000);
-        //rf.setConnectTimeout(2000);
-		//final String uri = "http://193.219.91.103:1858/users";
-		
-		//try {
-			//HttpHeaders requestHeaders = new HttpHeaders();
-			//requestHeaders.setContentType(MediaType.APPLICATION_JSON);
-			//HttpEntity<String> entity = new HttpEntity<String>("parameters", requestHeaders);
-			//ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(HttpClients.createDefault());
-			/*ResponseEntity<String> result = restTemplate.exchange(uri, HttpMethod.GET,entity, String.class); 
-			Gson g = new Gson();
-			ArrayResponsePojo testDTO = g.fromJson(result.getBody(), ArrayResponsePojo.class); 
-			System.out.println(testDTO.getData()[0].getFirstName());
-			return result;
-			
-			List<User> users = toDoNoteService.getAllNotesUsers(note);
-			//ResponseEntity<ArrayResponsePojo> result = restTemplate.exchange(uri, HttpMethod.GET,null, new ParameterizedTypeReference<ArrayResponsePojo>(){}); 
-			return users;
-			
-		//}
-		//catch (HttpClientErrorException ex) {
-			//return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
-	         //       .body(ex.getResponseBodyAsString());
-		//     return null;
-		//}
-		//Resource<ToDoNote> resource = new Resource<ToDoNote>(note);
-		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId)).withSelfRel();
-		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote()).withRel("allTodos");
-		//resource.add(linkToSelf);
-		//resource.add(linkToAll);
 		
 		
 	}
 	
+	/*
 	@GetMapping("/todos/priority/{number}")
 	public List<ToDoNote> getAllPriorityNotes(@PathVariable int number){
 		ArrayList<ToDoNote> priorityNotes = new ArrayList<ToDoNote>();
@@ -231,42 +230,77 @@ public class ToDoNoteController {
 		
 		return priorityNotes;
 	}
+	*/
+	
 	
 	@GetMapping("/todos/{toDoNoteId}")
-	public Resource<?> getToDoNoteById(@PathVariable int toDoNoteId,@RequestParam(value = "embed",required =false)String embed) {
-		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
-		if(note==null) {
+	public ResponseEntity<?> getToDoNoteById(@PathVariable int toDoNoteId,@RequestParam(value = "embed",required =false)String embed) throws ParseException, JsonParseException, JsonMappingException, IOException {
+		ToDoNoteDTO noteDTO = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
+		ToDoNote toDoNote = null;
+		RestTemplate restTemplate = new RestTemplate();
+		if(noteDTO==null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
 			
 		}
-		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId,"false")).withSelfRel();
-		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("true")).withRel("allTodos");
-		Link linkToFull =  linkTo(methodOn(this.getClass()).getNotesUsers(toDoNoteId)).withRel("users");
+		
 		if(embed!=null && embed.equals("users")) {
-			Resource<ToDoNote> resource = new Resource<ToDoNote>(note);
-			//resource.add(linkToAll);
-			return resource;
-			
-		}
-		else {
-			ToDoNoteDTO noteDto = convertToDto(note);
-			Resource<ToDoNoteDTO> resource = new Resource<ToDoNoteDTO>(noteDto);
-			//resource.add(linkToSelf);
-			resource.add(linkToFull);
-			//resource.add(linkToAll);
-			return resource;
+			ArrayList<String> emails = noteDTO.getUserEmails();
+			ArrayList<User> users = new ArrayList<User>();
+			if(!emails.isEmpty()) {
+				for(int i=0; i<emails.size(); i++) {
+					final String uri = "http://friend:5000/users/"+emails.get(i);
+					ResponseEntity<String> result =null;
+					int statusCode=0;
+					ObjectMapper mapper = new ObjectMapper();
+					//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
+					try { // If user exists we will just add it to our ToDoNote
+						 result = restTemplate.getForEntity(uri, String.class);
+						 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+						 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+						 users.add(userResponse);
+						
+					}
+					catch (HttpClientErrorException ex) {
+						return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+				                .body(ex.getResponseBodyAsString());     
+					}
+					catch(RestClientException ex2) {
+						if(ex2.getCause() instanceof ConnectException) {
+							System.out.println(ex2.getCause());
+							return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+						}
+					}
+					
+					// get is kito web serviso pagal emailus
+				}
+				toDoNote = convertToEntity(noteDTO,true);
+				toDoNote.setUsers(users);
+				// konvertuoti dto i note ir pridet prie jo userius
+			}
+			else {
+				toDoNote = convertToEntity(noteDTO,true);
+			}
+			return  new ResponseEntity<ToDoNote>(toDoNote,HttpStatus.CREATED);
 		}
 		
-		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId,"false")).withSelfRel();
-		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("labas")).withRel("allTodos");
-		//resource.add(linkToSelf);
-		//resource.add(linkToAll);
+		else {
+			//ToDoNoteDTO noteDto = convertToDto(note);
+			//Resource<ToDoNoteDTO> resource = new Resource<ToDoNoteDTO>(noteDto);
+			//resource.add(linkToSelf);
+			//resource.add(linkToFull);
+			//resource.add(linkToAll);
+			return new ResponseEntity<ToDoNoteDTO>(noteDTO,HttpStatus.OK);
+		}
+		
+		
 		
 	}
 	
+	
+	
 	@GetMapping("/users")
 	public ResponseEntity<?> getUsersFromOtherService() throws JsonParseException, JsonMappingException, IOException {
-		final String uri = "http://friend:5000/users";
+		final String uri = "http://friend:5000/users";//"http://friend:5000/users";
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<String> result =null;
 		//int statusCode=0;
@@ -292,6 +326,16 @@ public class ToDoNoteController {
 	                .body(ex.getResponseBodyAsString());
 		}
 		
+		catch(RestClientException ex2) {
+			if(ex2.getCause() instanceof ConnectException) {
+				System.out.println(ex2.getCause());
+				return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+			}
+			else {
+				return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		
 		
 	}
 	
@@ -300,36 +344,55 @@ public class ToDoNoteController {
 	
 	
 	@GetMapping("/todos/{toDoNoteId}/users/{email}")
-	public Resource<User> getUserByEmail(@PathVariable int toDoNoteId,@PathVariable String email) {
-		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
-		if(note==null) {
+	public ResponseEntity<?> getUserByEmail(@PathVariable int toDoNoteId,@PathVariable String email) throws JsonParseException, JsonMappingException, IOException {
+		ToDoNoteDTO noteDTO = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
+		RestTemplate restTemplate = new RestTemplate();
+		if(noteDTO==null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
 			
 		}
-		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getUserByEmail(toDoNoteId,email)).withSelfRel();
-		//Link linkToAll =  linkTo(methodOn(this.getClass()).getNotesUsers(toDoNoteId)).withRel("allNotes");
 		
-		//System.out.println("email: " + email);
-		User user = toDoNoteService.getUserFromNote(toDoNoteId, email);
-		if(user==null) {
-			throw new ToDoNoteNotFoundException("User with email "+ email + " not found for this note"); // reiktu naujo exception kur UserNotFound
+		final String uri = "http://friend:5000/users/"+email;
+		ResponseEntity<String> result =null;
+		int statusCode=0;
+		ObjectMapper mapper = new ObjectMapper();
+		//ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
+		try { 
+			 result = restTemplate.getForEntity(uri, String.class);
+			 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+			 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+			 return new ResponseEntity<User>(userResponse,HttpStatus.OK);
+			 //users.add(userResponse);
+			
+		}
+		catch (HttpClientErrorException ex) {
+			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+	                .body(ex.getResponseBodyAsString());     
+		}
+		catch(RestClientException ex2) {
+			if(ex2.getCause() instanceof ConnectException) {
+				System.out.println(ex2.getCause());
+				return new ResponseEntity<String>("\"Could not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+			}
+			else {
+				return new ResponseEntity<String>(ex2.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 		}
 		
-		Resource<User> resource = new Resource<User>(user);
-		
-		//Link linkToSelf =  linkTo(methodOn(this.getClass()).getToDoNoteById(toDoNoteId,"false")).withSelfRel();
-		//Link linkToAll =  linkTo(methodOn(this.getClass()).getAllToDoNote("labas")).withRel("allTodos");
-		//resource.add(linkToSelf);
-		//resource.add(linkToAll);
-		return resource;
 		
 		
 	}
 	
-	@PostMapping("/todos/{toDoNoteId}/users")
-	public ResponseEntity<?> addUserToNote(@RequestBody User user,@PathVariable int toDoNoteId) throws JsonParseException, JsonMappingException, ConnectException, IOException{
+	
+	@PostMapping("/todos/{toDoNoteId}/users") // postinam nauja useri arba jau egzistuojanti kitame web servise
+	public ResponseEntity<?> addUserToNote(@RequestBody User user,@PathVariable int toDoNoteId,UriComponentsBuilder builder) throws JsonParseException, JsonMappingException, ConnectException, IOException{
+		ToDoNoteDTO noteDTO = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
+		if(noteDTO==null) {
+			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
+			
+		}
 		String email = user.getEmail();
-		final String uri = "http://193.219.91.103:1858/users/"+email;
+		final String uri = "http://friend:5000/users/"+email;
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<String> result =null;
 		int statusCode=0;
@@ -342,13 +405,20 @@ public class ToDoNoteController {
 			 result = restTemplate.getForEntity(uri, String.class);
 			 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
 			 User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
-			 ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
-			 if(toDoNote.checkIfUserExists(userToRespond)==true) {
+			 boolean match = checkIfUsersMatch(user,userToRespond);
+			 if(match==false) { // putinam/updatinam kitam web service
+				 HttpEntity<User> userEntity = new HttpEntity<User>(user);
+				 result= restTemplate.exchange(uri, HttpMethod.PUT,userEntity,String.class);
+			 }
+			// ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
+			 if(noteDTO.checkIfUserExists(user)==true) {
 					return new ResponseEntity<String>("\"User already in this note\"",HttpStatus.CONFLICT);
 			 }
 			 	else {
-			 		toDoNoteService.getToDoNoteById(toDoNoteId).addUser(userToRespond);
-			 		return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+			 		toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+			 		HttpHeaders headers = new HttpHeaders();
+					headers.setLocation(builder.path("/todos/{id}/users/{email}").buildAndExpand(noteDTO.getId(),user.getEmail()).toUri());
+			 		return new ResponseEntity<User>(userToRespond,headers,HttpStatus.CREATED);
 			 	}
 
 			//System.out.println("result" + result);
@@ -363,7 +433,7 @@ public class ToDoNoteController {
 		catch(RestClientException ex2) {
 			if(ex2.getCause() instanceof ConnectException) {
 				System.out.println(ex2.getCause());
-				return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.CONFLICT);
+				return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
 			}
 		}
 		
@@ -381,8 +451,10 @@ public class ToDoNoteController {
 				
 				ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
 				User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
-				toDoNoteService.getToDoNoteById(toDoNoteId).addUser(userToRespond);
-				return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+				toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+				HttpHeaders headers = new HttpHeaders();
+				headers.setLocation(builder.path("/todos/{id}/users/{email}").buildAndExpand(noteDTO.getId(),user.getEmail()).toUri()); // lygtais butu galima duoti ir user to respond
+				return new ResponseEntity<User>(userToRespond,headers,HttpStatus.CREATED);
 			}
 		}
 			catch (HttpClientErrorException ex) {
@@ -398,76 +470,20 @@ public class ToDoNoteController {
 	}
 	
 	
-	@PutMapping("/todos/{toDoNoteId}/users/{email}")
-	public ResponseEntity<?> updateUser(@PathVariable int toDoNoteId, @PathVariable String email,@RequestBody User user) throws JsonParseException, JsonMappingException, IOException{
-		ToDoNote todos = toDoNoteService.getToDoNoteById(toDoNoteId);
-		RestTemplate restTemplate = new RestTemplate();
-		ResponseEntity<String> result =null;
-		ObjectMapper mapper = new ObjectMapper();
-		final String uriPut = "http://friend:5000/users/"+email; 
-		if(user.getEmail()==null || user.getFirstName()==null || user.getLastName()==null) {
-			return new ResponseEntity<String>("\"Required fields are missing( required fields are email,firstName,LastName)\"",HttpStatus.BAD_REQUEST);
-		}
-		else {
-			try {
-			HttpEntity<User> userEntity = new HttpEntity<User>(user);
-				result = restTemplate.exchange(uriPut,HttpMethod.PUT,userEntity, String.class);
-				ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
-				 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
-				for(int i=0; i< toDoNoteService.getAllToDoNote().size(); i++) {
-					toDoNoteService.getAllToDoNote().get(i).updateUser(user, email); // updates info in all of the notes
-				}
-				return new ResponseEntity<User>(userResponse,HttpStatus.ACCEPTED);
-			}
-			catch (HttpClientErrorException ex) {
-			
-				//System.out.println("value"+ ex.getStatusCode().value());
-				return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
-		                .body(ex.getResponseBodyAsString());
-			}
-		}
-		
-		
-		
-	}
 	
-	@PatchMapping("/todos/{toDoNoteId}/users/{email}")
-	public ResponseEntity<?> patchUser(@PathVariable int toDoNoteId, @PathVariable String email,@RequestBody User user) throws JsonParseException, JsonMappingException, IOException{
-		ToDoNote todos = toDoNoteService.getToDoNoteById(toDoNoteId);
-		RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-		ResponseEntity<String> result =null;
-		ObjectMapper mapper = new ObjectMapper();
-		final String uriPut = "http://friend:5000/users/"+email;
-		try {
-			HttpEntity<User> userEntity = new HttpEntity<User>(user);
-			result = restTemplate.exchange(uriPut,HttpMethod.PATCH,userEntity, String.class);
-			ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
-			 User userResponse = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
-			 for(int i=0; i< toDoNoteService.getAllToDoNote().size(); i++) {
-					toDoNoteService.getAllToDoNote().get(i).updateUser(user, email); // updates info in all of the notes
-				}
-			return new ResponseEntity<User>(userResponse,HttpStatus.ACCEPTED);
-		}
-		catch (HttpClientErrorException ex) {
-			
-			//System.out.println("value"+ ex.getStatusCode().value());
-			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
-	                .body(ex.getResponseBodyAsString());
-		}
-	}
 	
 	
 	// remove user only from note
 		@DeleteMapping("/todos/{toDoNoteId}/users/{email}")
 		public ResponseEntity<User> deleteUser(@PathVariable int toDoNoteId,@PathVariable String email){
-			ToDoNote todos = toDoNoteService.getToDoNoteById(toDoNoteId);
+			ToDoNoteDTO todoDTO = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
 			
-			if(todos == null) {
+			if(todoDTO == null) {
 				throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found. Cannot delete.");
 			}
 			
-			User user = toDoNoteService.getUserFromNote(toDoNoteId, email);
-			if(user==null) {
+			boolean isPresent = toDoNoteService.isUserPresent(toDoNoteId, email);
+			if(isPresent==false) {
 				throw new ToDoNoteNotFoundException("User with email "+ email + " not found for this note"); // reiktu naujo exception kur UserNotFound
 			}
 			
@@ -476,188 +492,352 @@ public class ToDoNoteController {
 			return new ResponseEntity<User>(HttpStatus.NO_CONTENT);
 		}
 	
-	/*@GetMapping("/todos/{toDoNoteId}/users")
-	public List<User> getNotesUsers(@PathVariable int toDoNoteId) {
-		ToDoNote note = toDoNoteService.getToDoNoteById(toDoNoteId);
-		if(note==null) {
-			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found");
-			
-		}
-		
-		return note.getUsers(); // arba kreiptis i toDoNoteService
-		
-		
-	}
-	*/
-	/*
-	@PostMapping("/todos/{toDoNoteId}/users") 
-	public ResponseEntity <String> postUser(@RequestBody User user, @PathVariable int toDoNoteId, UriComponentsBuilder builder)throws HttpMessageNotReadableException, ParseException{
-		
-		RestTemplate restTemplate = new RestTemplate();
-		final String uri = "http://193.219.91.103:1858/users";
-		
-		try {
-			ResponseEntity<String> result = restTemplate.postForEntity(uri, user, String.class); 
-			return result;
-			
-		}
-		catch (HttpClientErrorException ex) {
-			return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
-	                .body(ex.getResponseBodyAsString());
-		     
-		}
-		//if(toDoNote==null) {
-		//	return ResponseEntity.noContent().build(); // cia reikia naujo exception ten body not found or smth
-		//}
-		
-		//if(toDoNote.getDateToComplete()!=null && toDoNote.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
-		//	throw new InvalidFieldException("Invalid Date");
-		//}
-		
-		//HttpHeaders headers = new HttpHeaders();
-		//headers.setLocation(builder.path("/todos/{id}").buildAndExpand(toDoNote.getId()).toUri());
-		//return new ResponseEntity<ToDoNote>(toDoNote,headers, HttpStatus.CREATED);
-	}
 	
 	
 	
 	@PostMapping("/todos") 
-	public ResponseEntity<ToDoNoteDTO> addNote(@RequestBody ToDoNote newNoteDto, UriComponentsBuilder builder)throws HttpMessageNotReadableException, ParseException{
+	public ResponseEntity<?> addNote(@RequestBody ToDoNote newNote, UriComponentsBuilder builder)throws HttpMessageNotReadableException, ParseException, JsonParseException, JsonMappingException, IOException{
 		//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		ToDoNoteDTO noteDTO = convertToDto(newNote); // noteDto su tusciu email list so far
 		
-		System.out.println(newNoteDto.getUsers());
-		
-		//toDoNote.us
-		
-		if(newNoteDto==null) {
+		if(newNote==null) {
 			return ResponseEntity.noContent().build(); // cia reikia naujo exception ten body not found or smth
 		}
 		
-		if(newNoteDto.getDateToComplete()!=null && newNoteDto.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
+		if(newNote.getDateToComplete()!=null && newNote.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
 			throw new InvalidFieldException("Invalid Date");
 		}
 		
-		//ToDoNote toDoNote = convertToEntity(newNoteDto,true);
-		
-		//toDoNote=toDoNoteService.addToDoNote(toDoNote);
-		//newNoteDto.setId(toDoNote.getId());
-		
-		//HttpHeaders headers = new HttpHeaders();
-		//headers.setLocation(builder.path("/todos/{id}").buildAndExpand(toDoNote.getId()).toUri());
-		//return new ResponseEntity<ToDoNoteDTO>(newNoteDto,headers, HttpStatus.CREATED);
-		return null;
-	}
-	/*
-	@PutMapping("/todos")
-	public ResponseEntity<ToDoNoteDTO> updateToDoNote(@Valid @RequestBody ToDoNoteDTO noteDto) throws ParseException{
-		ToDoNote todos = toDoNoteService.getToDoNoteById(noteDto.getId());
-		//ToDoNoteDto
-		
-		if(todos == null) {
-			throw new ToDoNoteNotFoundException("Note with id "+ noteDto.getId() + " not found");
+		if(newNote.getUsers()==null) { // jeigu Useriai nepaduoti tiesiog sukuriam tuscia
+			newNote.setUsers(new ArrayList<User>());
 		}
+		ArrayList<User> users = newNote.getUsers();
+		// eisim per paduotus userius
+		for(int i=0; i<users.size(); i++) {
+			
+			String email = users.get(i).getEmail();
+			final String uri = "http://friend:5000/users/"+email;
+			RestTemplate restTemplate = new RestTemplate();
+			ResponseEntity<String> result =null;
+			int statusCode=0;
+			ObjectMapper mapper = new ObjectMapper();
+			User tempUser = users.get(i);
+			
+			try { // If user exists we will just add it to our ToDoNote
+				 result = restTemplate.getForEntity(uri, String.class);
+				 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+				 User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+				 boolean match = checkIfUsersMatch(tempUser,userToRespond);
+				 if(match==false) { // putinam/updatinam kitam web service
+					 HttpEntity<User> userEntity = new HttpEntity<User>(tempUser);
+					 result= restTemplate.exchange(uri, HttpMethod.PUT,userEntity,String.class);
+				 }
+				// ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
+				 if(noteDTO.checkIfUserExists(tempUser)==true) { // turetu veikt kaip antiduplicate tik ofc meta error o ne ignorina duplicate
+						return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
+				 }
+				 	else {
+				 		noteDTO.addUserEmail(tempUser.getEmail());
+				 		//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+				 		//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+				 	}
+
+				//System.out.println("result" + result);
+				//testing lag
+				
+			}
+			
+			catch (HttpClientErrorException ex) {
+				System.out.println("value"+ ex.getStatusCode().value());
+				statusCode=ex.getStatusCode().value();     
+			}
+			catch(RestClientException ex2) {
+				if(ex2.getCause() instanceof ConnectException) {
+					System.out.println(ex2.getCause());
+					return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+				}
+			}
+			
 		
-		if(noteDto.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
-			throw new InvalidFieldException("Invalid Date");
+			
+			
+			try { // If user does not exist by the given email we can POST
+				if(statusCode==404) {
+					if(tempUser.getEmail()==null || tempUser.getFirstName()==null || tempUser.getLastName()==null) {
+						 return new ResponseEntity<String>("\"Required fields are missing( required fields are email,firstName,LastName)\"",HttpStatus.BAD_REQUEST);
+					}
+					final String uriPost = "http://friend:5000/users";
+					result= restTemplate.postForEntity(uriPost, tempUser, String.class);
+					System.out.println("result" + result);
+					
+					ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+					User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+					noteDTO.addUserEmail(userToRespond.getEmail());
+					//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+					//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+				}
+			}
+				catch (HttpClientErrorException ex) {
+					System.out.println("value"+ ex.getStatusCode().value());
+					return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+			                .body(ex.getResponseBodyAsString());
+				}
+			
 		}
-		
-		if(noteDto.getName()==null) {
-			throw new InvalidFieldException("Name is required");
-		}
-		todos.setName(noteDto.getName());
-		
-		
-		todos.setDateToComplete(noteDto.getDateToComplete());
+		toDoNoteService.addToDoNoteDTO(noteDTO);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(builder.path("/todos/{id}?embedded=true").buildAndExpand(noteDTO.getId()).toUri());
+		newNote.setId(noteDTO.getId()); // reikia nes laikome DTO objektus tai niekad newNote neuzsetins id
+		return new ResponseEntity<ToDoNote>(newNote,headers, HttpStatus.CREATED);
 		
 		
-		todos.setDescription(noteDto.getDescription());
-		
-		
-		todos.setPriority(noteDto.getPriority());
-		
-		todos.setCompleted(noteDto.isCompleted());
-		
-		toDoNoteService.updateToDoNote(todos);
-		return new ResponseEntity<ToDoNoteDTO>(noteDto, HttpStatus.OK);
-		
-		
+		//return null;
 	}
 	
 	
 	@PutMapping("/todos/{id}")
-	public ResponseEntity<ToDoNoteDTO> updateToDoNote(@Valid @RequestBody ToDoNoteDTO noteDto, @PathVariable int id) throws ParseException{
-		ToDoNote oldNote = toDoNoteService.getToDoNoteById(id);
+	public ResponseEntity<?> updateToDoNote(@Valid @RequestBody ToDoNote note, @PathVariable int id) throws ParseException, JsonParseException, JsonMappingException, IOException{
+		ToDoNoteDTO oldNoteDTO = toDoNoteService.getToDoNoteDTOById(id); // senas note su Emailais. Kadangi put tai koki paduos i toki ir pakeisim	
 		//System.out.println("sizee "+toDoNoteService.getAllToDoNote().size());
 		
-		if(oldNote == null) {
+		if(oldNoteDTO == null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ id + " not found");
 		}
 		
-		if(noteDto.getDateToComplete()!=null && noteDto.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
+		if(note.getDateToComplete()!=null && note.getDateToComplete().before(dateFormat.parse(dateFormat.format(new Date())))) {
 			throw new InvalidFieldException("Invalid Date");
 		}
 		
-		oldNote.setName(noteDto.getName());
-		oldNote.setDateToComplete(noteDto.getDateToComplete());
-		oldNote.setDescription(noteDto.getDescription());
-		oldNote.setPriority(noteDto.getPriority());
-		oldNote.setCompleted(noteDto.isCompleted());
+		//oldNoteDTO.setId(id);
 		
-		toDoNoteService.updateToDoNote(oldNote);
-		noteDto.setId(id);
-		return new ResponseEntity<ToDoNoteDTO>(noteDto, HttpStatus.OK);
+		oldNoteDTO.setName(note.getName());
+		oldNoteDTO.setDateToComplete(note.getDateToComplete());
+		oldNoteDTO.setDescription(note.getDescription());
+		oldNoteDTO.setPriority(note.getPriority());
+		oldNoteDTO.setCompleted(note.isCompleted());
+		
+		
+		if(note.getUsers()==null) { // jeigu Useriai nepaduoti tiesiog sukuriam tuscia
+			note.setUsers(new ArrayList<User>());
+		}
+		ArrayList<User> users = note.getUsers();
+		// eisim per paduotus userius
+		for(int i=0; i<users.size(); i++) {
+			
+			String email = users.get(i).getEmail();
+			final String uri = "http://friend:5000/users/"+email;
+			RestTemplate restTemplate = new RestTemplate();
+			ResponseEntity<String> result =null;
+			int statusCode=0;
+			ObjectMapper mapper = new ObjectMapper();
+			User tempUser = users.get(i);
+			
+			try { // If user exists we will just add it to our ToDoNote
+				 result = restTemplate.getForEntity(uri, String.class);
+				 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+				 User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+				 boolean match = checkIfUsersMatch(tempUser,userToRespond);
+				 if(match==false) { // putinam/updatinam kitam web service
+					 HttpEntity<User> userEntity = new HttpEntity<User>(tempUser);
+					 result= restTemplate.exchange(uri, HttpMethod.PUT,userEntity,String.class);
+				 }
+				// ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
+				 if(oldNoteDTO.checkIfUserExists(tempUser)==true) { // turetu veikt kaip antiduplicate tik ofc meta error o ne ignorina duplicate
+						return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
+				 }
+				 	else {
+				 		oldNoteDTO.addUserEmail(tempUser.getEmail());
+				 		//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+				 		//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+				 	}
+
+				//System.out.println("result" + result);
+				//testing lag
+				
+			}
+			
+			catch (HttpClientErrorException ex) {
+				System.out.println("value"+ ex.getStatusCode().value());
+				statusCode=ex.getStatusCode().value();     
+			}
+			catch(RestClientException ex2) {
+				if(ex2.getCause() instanceof ConnectException) {
+					System.out.println(ex2.getCause());
+					return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+				}
+			}
+			
+			try { // If user does not exist by the given email we can POST
+				if(statusCode==404) {
+					if(tempUser.getEmail()==null || tempUser.getFirstName()==null || tempUser.getLastName()==null) {
+						 return new ResponseEntity<String>("\"Required fields are missing( required fields are email,firstName,LastName)\"",HttpStatus.BAD_REQUEST);
+					}
+					final String uriPost = "http://friend:5000/users";
+					result= restTemplate.postForEntity(uriPost, tempUser, String.class);
+					System.out.println("result" + result);
+					
+					ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+					User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+					oldNoteDTO.addUserEmail(userToRespond.getEmail());
+					//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+					//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+				}
+			}
+				catch (HttpClientErrorException ex) {
+					System.out.println("value"+ ex.getStatusCode().value());
+					return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+			                .body(ex.getResponseBodyAsString());
+				}
+			
+		}
+		toDoNoteService.updateToDoNoteDTO(oldNoteDTO);
+		//toDoNoteService.addToDoNoteDTO(noteDTO);
+		//HttpHeaders headers = new HttpHeaders();
+		//headers.setLocation(builder.path("/todos/{id}?embedded=true").buildAndExpand(noteDTO.getId()).toUri());
+		
+		
+		
+		
+		
+		
+		note.setId(id);
+		
+		return new ResponseEntity<ToDoNote>(note, HttpStatus.OK);
 	}
 	
+	
 	@PatchMapping("/todos/{id}")
-	public ResponseEntity<ToDoNoteDTO> partlyUpdateToDoNote(@RequestBody ToDoNoteDTO noteDto, @PathVariable int id){
-		ToDoNote oldNote = toDoNoteService.getToDoNoteById(id);
+	public ResponseEntity<?> partlyUpdateToDoNote(@RequestBody ToDoNote note, @PathVariable int id) throws JsonParseException, JsonMappingException, IOException{
+		ToDoNoteDTO oldNoteDTO = toDoNoteService.getToDoNoteDTOById(id);
 		
-		if(oldNote == null) {
+		if(oldNoteDTO == null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ id + " not found");
 		}
-		noteDto.setId(id);
+		note.setId(id);
 		
-		if(noteDto.getName()!= null){
-			oldNote.setName(noteDto.getName());
+		
+		if(note.getName()!= null){
+			oldNoteDTO.setName(note.getName());
 		}
 		
-		if(noteDto.getDateToComplete()!= null){
-			oldNote.setDateToComplete(noteDto.getDateToComplete());
+		if(note.getDateToComplete()!= null){
+			oldNoteDTO.setDateToComplete(note.getDateToComplete());
 		}
 		
-		if(noteDto.getDescription()!= null){
-			oldNote.setDescription(noteDto.getDescription());
+		if(note.getDescription()!= null){
+			oldNoteDTO.setDescription(note.getDescription());
 		}
 		
-		if(noteDto.getPriority()!= null){
-			oldNote.setPriority(noteDto.getPriority());
+		if(note.getPriority()!= null){
+			oldNoteDTO.setPriority(note.getPriority());
 		}
 		
-		if(noteDto.isCompleted()!= null){
-			oldNote.setCompleted(noteDto.isCompleted());
+		if(note.isCompleted()!= null){
+			oldNoteDTO.setCompleted(note.isCompleted());
 		}
 		
-		toDoNoteService.updateToDoNote(oldNote);
-		noteDto = convertToDto(oldNote); 
-		return new ResponseEntity<ToDoNoteDTO>(noteDto, HttpStatus.OK);
+		if(note.getUsers()!=null) {
+			
+			ArrayList<User> users = note.getUsers();
+			// eisim per paduotus userius
+			for(int i=0; i<users.size(); i++) {
+				
+				String email = users.get(i).getEmail();
+				final String uri = "http://friend:5000/users/"+email;
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<String> result =null;
+				int statusCode=0;
+				ObjectMapper mapper = new ObjectMapper();
+				User tempUser = users.get(i);
+				
+				try { // If user exists we will just add it to our ToDoNote
+					 result = restTemplate.getForEntity(uri, String.class);
+					 ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+					 User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+					 boolean match = checkIfUsersMatch(tempUser,userToRespond);
+					 if(match==false) { // putinam/updatinam kitam web service
+						 HttpEntity<User> userEntity = new HttpEntity<User>(tempUser);
+						 result= restTemplate.exchange(uri, HttpMethod.PUT,userEntity,String.class);
+					 }
+					// ToDoNote toDoNote = toDoNoteService.getToDoNoteById(toDoNoteId);
+					 if(oldNoteDTO.checkIfUserExists(tempUser)==true) { // turetu veikt kaip antiduplicate tik ofc meta error o ne ignorina duplicate
+							return new ResponseEntity<String>("\"Please remove duplicate Users\"",HttpStatus.CONFLICT);
+					 }
+					 	else {
+					 		oldNoteDTO.addUserEmail(tempUser.getEmail());
+					 		//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+					 		//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+					 	}
+
+					//System.out.println("result" + result);
+					//testing lag
+					
+				}
+				
+				catch (HttpClientErrorException ex) {
+					System.out.println("value"+ ex.getStatusCode().value());
+					statusCode=ex.getStatusCode().value();     
+				}
+				catch(RestClientException ex2) {
+					if(ex2.getCause() instanceof ConnectException) {
+						System.out.println(ex2.getCause());
+						return new ResponseEntity<String>("\"Coudl not connect\"",HttpStatus.SERVICE_UNAVAILABLE);
+					}
+				}
+				
+			
+				
+				
+				try { // If user does not exist by the given email we can POST
+					if(statusCode==404) {
+						if(tempUser.getEmail()==null || tempUser.getFirstName()==null || tempUser.getLastName()==null) {
+							 return new ResponseEntity<String>("\"Required fields are missing( required fields are email,firstName,LastName)\"",HttpStatus.BAD_REQUEST);
+						}
+						final String uriPost = "http://friend:5000/users";
+						result= restTemplate.postForEntity(uriPost, tempUser, String.class);
+						System.out.println("result" + result);
+						
+						ResponsePojo pojo = mapper.readValue(result.getBody(), ResponsePojo.class);
+						User userToRespond = new User(pojo.getData().getEmail(),pojo.getData().getFirstName(),pojo.getData().getLastName());
+						oldNoteDTO.addUserEmail(userToRespond.getEmail());
+						//toDoNoteService.getToDoNoteDTOById(toDoNoteId).addUserEmail(userToRespond.getEmail());
+						//return new ResponseEntity<User>(userToRespond,HttpStatus.CREATED);
+					}
+				}
+					catch (HttpClientErrorException ex) {
+						System.out.println("value"+ ex.getStatusCode().value());
+						return ResponseEntity.status(ex.getRawStatusCode()).headers(ex.getResponseHeaders())
+				                .body(ex.getResponseBodyAsString());
+					}
+				
+			}
+			
+			
+		}
+		
+		
+		toDoNoteService.updateToDoNoteDTO(oldNoteDTO);
+		//noteDto = convertToDto(oldNote); 
+		return new ResponseEntity<ToDoNote>(note, HttpStatus.OK);
 	}	
 	
 	@DeleteMapping("/todos/{toDoNoteId}")
 	public ResponseEntity<ToDoNoteDTO> deleteToDoNote(@PathVariable int toDoNoteId){
-		ToDoNote todos = toDoNoteService.getToDoNoteById(toDoNoteId);
+		ToDoNoteDTO todoDTO = toDoNoteService.getToDoNoteDTOById(toDoNoteId);
 		
-		if(todos == null) {
+		if(todoDTO == null) {
 			throw new ToDoNoteNotFoundException("Note with id "+ toDoNoteId + " not found. Cannot delete.");
 		}
 		//ToDoNoteDTO  noteDto = convertToDto(todos);
-		toDoNoteService.deleteToDoNote(toDoNoteId);
+		toDoNoteService.deleteToDoNoteDTO(toDoNoteId);
 		return new ResponseEntity<ToDoNoteDTO>(HttpStatus.NO_CONTENT);
 	}
 	
-	*/
 	
-	private ToDoNoteDTO convertToDto(ToDoNote note) {
+	
+	private ToDoNoteDTO convertToDto(ToDoNote note) { // ideda ne userius o empty email ArrayList
 	    ToDoNoteDTO noteDto = modelMapper.map(note, ToDoNoteDTO.class);
+	    noteDto.setEmails(new ArrayList<String>());
 	    return noteDto;
 	}
 	
@@ -679,6 +859,13 @@ public class ToDoNoteController {
        // }
        // return note;
     }
+	
+	boolean checkIfUsersMatch(User user1, User user2) { // galimai reikes pakeisti
+		if(user1.equals(user2)) {
+			return true;
+		}
+		return false;
+	}
 }
 
 

@@ -134,6 +134,7 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 				oldToDoNote.setDescription(toDoNote.getDescription());
 				oldToDoNote.setPriority(toDoNote.getPriority());
 				oldToDoNote.setCompleted(toDoNote.isCompleted());
+				oldToDoNote.setEmails(toDoNote.getUserEmails());
 			}
 		}
 	}
@@ -155,19 +156,19 @@ public class ToDoNoteServiceImpl implements ToDoNoteService{
 	}
 	
 	
-	/*
-	public User getUserFromNote(int noteId, String email) {
-		ToDoNote note = this.getToDoNoteById(noteId);
-		ArrayList<User> users = note.getUsers();
-		for(int i=0; i<users.size(); i++) {
-			User tempUser = users.get(i);
-			if(tempUser.getEmail().equals(email)) {
-				return tempUser;
+	
+	public boolean isUserPresent(int noteId, String email) {
+		ToDoNoteDTO noteDTO = this.getToDoNoteDTOById(noteId);
+		ArrayList<String> userEmails = noteDTO.getUserEmails();
+		for(int i=0; i<userEmails.size(); i++) {
+			String tempEmail = userEmails.get(i);
+			if(tempEmail.equals(email)) {
+				return true;
 			}
 		}
-		return null;
+		return false;
 	}
-	*/
+	
 	
 	public void removeUser(int noteId, String email) {
 		ArrayList <String> userEmails = this.getToDoNoteDTOById(noteId).getUserEmails();
